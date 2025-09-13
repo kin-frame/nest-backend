@@ -1,0 +1,14 @@
+services:
+  kinframes-auth-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: kinframes-auth-service
+    ports:
+      - '8001:8001' # 호스트:컨테이너
+    environment:
+      - NODE_ENV=production
+      - PORT=8001
+    env_file:
+      - .env
+    restart: unless-stopped
