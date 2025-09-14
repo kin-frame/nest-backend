@@ -15,5 +15,17 @@ export class User {
   picture: string;
 
   @Column({ default: 'PENDING' })
-  status: 'PENDING' | 'APPROVED' | 'REJECTED';
+  status: 'PENDING' | 'SUBMIT' | 'APPROVED' | 'REJECTED';
+
+  @Column({ default: 'GUEST' })
+  role: 'ADMIN' | 'USER' | 'GUEST';
+
+  @Column({ default: 3 })
+  fileCount: number;
+
+  @Column({ default: 10 * 1024 * 1024 })
+  maxFileSize: number;
+
+  @Column({ default: '' })
+  message: string;
 }

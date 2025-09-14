@@ -3,6 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 
 import { GoogleUser } from 'src/auth/auth.controller';
+import { UserSignupDto } from './dto/signup.dto';
 import { User } from './user.entity';
 
 @Injectable()
@@ -26,5 +27,16 @@ export class UserService {
     }
 
     return user;
+  }
+
+  async signup(dto: UserSignupDto, userId: number) {
+    const user = await this.userRepo.findOneBy({ id: userId });
+    if (!user) throw new Error('사용자를 찾을 수 없습니다');
+
+    user.name = dto.name;
+    user.message = dto.message;
+    user.status = 'SUBMIT'; // 제출상태로 바꾸고 나중에 관리자가 처리
+
+    return this.userRepo.save(user);
   }
 }

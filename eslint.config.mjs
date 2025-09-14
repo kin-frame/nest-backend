@@ -38,7 +38,14 @@ export default [
         'error',
         {
           groups: [
-            ['^@nestjs', '^express', '^passport', '^typeorm', '^jsonwebtoken'],
+            [
+              '^@nestjs',
+              '^express',
+              '^passport',
+              '^cookie-parser',
+              '^typeorm',
+              '^jsonwebtoken',
+            ],
             [
               '^@app',
               '^@pages',

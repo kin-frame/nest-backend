@@ -4,36 +4,36 @@ import {
   Injectable,
   UnauthorizedException,
 } from '@nestjs/common';
-import jwt, { JwtPayload } from 'jsonwebtoken';
+import { type Request } from 'express';
+import jwt from 'jsonwebtoken';
 
 @Injectable()
 export class AuthGuard implements CanActivate {
   canActivate(ctx: ExecutionContext): boolean {
-    const req = ctx.switchToHttp().getRequest<RequestWithJWTPayload>();
+    const req = ctx.switchToHttp().getRequest<Request>();
 
-    const auth = req.headers.get('authorization');
-    if (!auth?.startsWith('Bearer ')) throw new UnauthorizedException();
+    // 1. 쿠키에서 먼저 확인
+    const token = req.cookies['access_token'] as string;
+
+    if (!token) {
+      throw new UnauthorizedException('JWT 토큰이 없습니다.');
+    }
 
     try {
-      const token = auth.slice(7);
-
       const payload = jwt.verify(
         token,
         process.env.JWT_SECRET || 'some_secret',
         {
-          algorithms: ['RS256'],
+          algorithms: ['HS256'], // RS256 쓰려면 공개키 필요
+          complete: true,
         },
       );
 
-      req.user = payload;
+      req.jwt = payload;
 
       return true;
     } catch {
-      throw new UnauthorizedException();
+      throw new UnauthorizedException('JWT 검증 실패');
     }
   }
-}
-
-interface RequestWithJWTPayload extends Request {
-  user: string | JwtPayload;
 }
