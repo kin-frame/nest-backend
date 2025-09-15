@@ -18,3 +18,11 @@ declare module 'express-serve-static-core' {
     jwt: JwtPayload;
   }
 }
+
+export interface CustomJwtPayload extends JwtPayload {
+  payload: {
+    id: number; // 사용자 ID
+    email: string; // 이메일
+    role: string; // 권한
+  };
+}
