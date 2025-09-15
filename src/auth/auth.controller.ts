@@ -40,6 +40,11 @@ export class AuthController {
         return res.redirect(`${process.env.CLIENT_URL}/signup`);
       }
 
+      if (user.status === 'SUBMIT') {
+        // 회원가입 신청을 완료했다면, 회원가입 완료 안내 페이지로 리다이렉트
+        return res.redirect(`${process.env.CLIENT_URL}/signup/info`);
+      }
+
       // APPROVED라면 홈으로 리다이렉트
       return res.redirect(`${process.env.CLIENT_URL}/home`);
     } catch (error) {
