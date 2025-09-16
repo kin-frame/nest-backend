@@ -27,6 +27,10 @@ export class FileService {
     return this.fileRepo.update({ id }, { status });
   }
 
+  async getFileKey(id: number) {
+    return this.fileRepo.findOne({ where: { id } });
+  }
+
   async findByKey(key: string) {
     return this.fileRepo.findOne({ where: { key } });
   }

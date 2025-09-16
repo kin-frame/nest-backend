@@ -24,7 +24,11 @@ import {
 import { FileStatus } from './file.entity';
 import { FileService } from './file.service';
 
-import { PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
+import {
+  GetObjectCommand,
+  PutObjectCommand,
+  S3Client,
+} from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 
 @Controller('file')
@@ -33,6 +37,24 @@ export class FileController {
     private readonly fileService: FileService,
     @Inject('S3_CLIENT') private readonly s3: S3Client,
   ) {}
+
+  @Get('presigned-url')
+  @UseGuards(AuthGuard)
+  @ApiOperation({
+    summary: 'S3 버킷에 접근할 수 있는 presigned url 요청',
+  })
+  async getPresignedUrl(@Query() query: { fileId: number }) {
+    const meta = await this.fileService.getFileKey(query.fileId);
+
+    const command = new GetObjectCommand({
+      Bucket: process.env.AWS_S3_BUCKET,
+      Key: meta?.key,
+    });
+
+    const url = await getSignedUrl(this.s3, command, { expiresIn: 60 * 60 });
+
+    return { url };
+  }
 
   @Post('presigned-url')
   @UseGuards(AuthGuard)
@@ -44,7 +66,7 @@ export class FileController {
   @ApiOkResponse({
     type: GetPresignedUrlResDto,
   })
-  async getPresignedUrl(
+  async getPresignedUploadUrl(
     @Req() req: Request,
     @Body()
     body: GetPresignedUrlReqDto,
