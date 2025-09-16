@@ -1,10 +1,10 @@
-import { Body, Controller, Post, Req, UseGuards } from '@nestjs/common';
-import { ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { Body, Controller, Get, Post, Req, UseGuards } from '@nestjs/common';
+import { ApiOkResponse, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { type Request } from 'express';
 
 import { AuthGuard } from 'src/common/auth.guard';
 import { CustomJwtPayload } from 'src/types/express';
-import { UserSignupDto } from './dto/signup.dto';
+import { UserSignupCheckResDto, UserSignupDto } from './dto/signup.dto';
 import { UserService } from './user.service';
 
 @Controller('user')
@@ -20,5 +20,21 @@ export class UserController {
     const jwtPayload = req.jwt.payload as CustomJwtPayload;
 
     return this.userService.signup(dto, jwtPayload.id);
+  }
+
+  @Get('signup/check')
+  @UseGuards(AuthGuard)
+  @ApiOperation({
+    summary: '회원가입 상태 확인',
+    description: '사용자의 회원가입 신청 상태를 확인합니다.',
+  })
+  @ApiOkResponse({
+    type: UserSignupCheckResDto,
+    description: '회원가입 상태 반환',
+  })
+  signupCheck(@Req() req: Request) {
+    const jwtPayload = req.jwt.payload as CustomJwtPayload;
+
+    return this.userService.signupCheck(jwtPayload.id);
   }
 }

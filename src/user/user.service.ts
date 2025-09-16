@@ -61,4 +61,12 @@ export class UserService {
       throw new BadRequestException('회원가입 처리 도중 오류가 발생했습니다.');
     }
   }
+
+  async signupCheck(userId: number) {
+    const user = await this.userRepo.findOneBy({ id: userId });
+
+    return {
+      status: user?.status,
+    };
+  }
 }
