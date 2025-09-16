@@ -7,6 +7,13 @@ import {
   UpdateDateColumn,
 } from 'typeorm';
 
+export enum FileStatus {
+  PENDING = 'PENDING', // 업로드 대기 중
+  UPLOADED = 'UPLOADED', // 업로드 완료
+  DELETED = 'DELETED', // 삭제
+  REMOVED = 'REMOVED', // 영구삭제(버킷까지)
+}
+
 @Entity()
 @Unique(['userId', 'fileName']) // 같은 사용자 + 같은 파일명 금지
 export class File {
@@ -37,8 +44,8 @@ export class File {
   fileType: string;
 
   // 상태 (PENDING, UPLOADED, PROCESSED 등)
-  @Column({ default: 'PENDING' })
-  status: string;
+  @Column({ default: FileStatus.PENDING })
+  status: FileStatus;
 
   @CreateDateColumn()
   createdAt: Date;

@@ -2,8 +2,10 @@ import {
   Body,
   ConflictException,
   Controller,
+  Get,
   Inject,
   Post,
+  Query,
   Req,
   ServiceUnavailableException,
   UseGuards,
@@ -12,12 +14,14 @@ import { ApiOkResponse, ApiOperation } from '@nestjs/swagger';
 import { type Request } from 'express';
 
 import { AuthGuard } from 'src/common/auth.guard';
+import { PagebleReqDto } from 'src/common/dto/pageble.dto';
 import { CustomJwtPayload } from 'src/types/express';
 import { CompleteUploadReqDto, CompleteUploadResDto } from './dto/complete.dto';
 import {
   GetPresignedUrlReqDto,
   GetPresignedUrlResDto,
 } from './dto/presigned-url.dto';
+import { FileStatus } from './file.entity';
 import { FileService } from './file.service';
 
 import { PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
@@ -57,7 +61,7 @@ export class FileController {
         fileName: body.fileName,
         fileSize: body.fileSize,
         fileType: body.fileType,
-        status: 'PENDING',
+        status: FileStatus.PENDING,
       });
 
       const command = new PutObjectCommand({
@@ -87,12 +91,31 @@ export class FileController {
     @Body() body: CompleteUploadReqDto,
   ): Promise<CompleteUploadResDto> {
     try {
-      await this.fileService.updateStatus(body.id, 'UPLOADED');
+      await this.fileService.updateStatus(body.id, FileStatus.UPLOADED);
       return { success: true };
     } catch {
       throw new ServiceUnavailableException({
         success: false,
       });
     }
+  }
+
+  @Get()
+  @UseGuards(AuthGuard)
+  @ApiOperation({
+    summary: '사용자가 업로드한 파일 목록 반환',
+  })
+  async getFiles(@Query() query: PagebleReqDto, @Req() req: Request) {
+    const jwtPayload = req.jwt.payload as CustomJwtPayload;
+    const sortArr: string[] = [];
+
+    return this.fileService.getFiles(
+      query.page,
+      query.size,
+      sortArr.concat(query.sort),
+      {
+        userId: jwtPayload.id,
+      },
+    );
   }
 }
