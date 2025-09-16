@@ -3,6 +3,7 @@ import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 
 import { AuthModule } from './auth/auth.module';
+import { FileModule } from './file/file.module';
 import { HealthModule } from './health/health.module';
 import { UserModule } from './user/user.module';
 
@@ -24,6 +25,7 @@ import { UserModule } from './user/user.module';
       synchronize: true, // 운영 배포 시에는 false 권장
     }),
     UserModule,
+    FileModule,
   ],
 })
 export class AppModule {}
