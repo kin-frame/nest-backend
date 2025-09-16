@@ -1,0 +1,35 @@
+import { ApiProperty } from '@nestjs/swagger';
+
+export class GetPresignedUrlReqDto {
+  @ApiProperty({
+    description: '파일 최종 수정일자',
+  })
+  lastModified: string;
+
+  @ApiProperty({
+    description: '파일명',
+  })
+  fileName: string;
+
+  @ApiProperty({
+    description: '파일크기(Byte), input File 객체의 값 그대로',
+  })
+  fileSize: number;
+
+  @ApiProperty({
+    description: '파일 유형, input File 객체의 값 그대로 업로드',
+  })
+  fileType: string;
+}
+
+export class GetPresignedUrlResDto {
+  @ApiProperty({
+    description: 'S3 presigned url (PUT요청, body: multipart-form-data)',
+  })
+  url: string;
+
+  @ApiProperty({
+    description: '파일 id',
+  })
+  id: number;
+}

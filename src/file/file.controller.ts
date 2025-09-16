@@ -5,12 +5,19 @@ import {
   Inject,
   Post,
   Req,
+  ServiceUnavailableException,
   UseGuards,
 } from '@nestjs/common';
+import { ApiOkResponse, ApiOperation } from '@nestjs/swagger';
 import { type Request } from 'express';
 
 import { AuthGuard } from 'src/common/auth.guard';
 import { CustomJwtPayload } from 'src/types/express';
+import { CompleteUploadReqDto, CompleteUploadResDto } from './dto/complete.dto';
+import {
+  GetPresignedUrlReqDto,
+  GetPresignedUrlResDto,
+} from './dto/presigned-url.dto';
 import { FileService } from './file.service';
 
 import { PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
@@ -25,15 +32,18 @@ export class FileController {
 
   @Post('presigned-url')
   @UseGuards(AuthGuard)
+  @ApiOperation({
+    summary: 'presigned url 요청',
+    description:
+      'File을 업로드 하고 해당 파일의 메타를 전달. url에 PUT요청으로 파일 업로드. 완료 후 complete api 호출하여 등록 완료',
+  })
+  @ApiOkResponse({
+    type: GetPresignedUrlResDto,
+  })
   async getPresignedUrl(
     @Req() req: Request,
     @Body()
-    body: {
-      lastModified: string;
-      fileName: string;
-      fileSize: number;
-      fileType: string;
-    },
+    body: GetPresignedUrlReqDto,
   ) {
     const jwtPayload = req.jwt.payload as CustomJwtPayload;
     const key = `uploads/${jwtPayload.id}/${Date.now()}-${body.fileName}`;
@@ -66,9 +76,23 @@ export class FileController {
 
   @Post('complete')
   @UseGuards(AuthGuard)
-  async completeUpload(@Body() body: { id: number }) {
-    await this.fileService.updateStatus(body.id, 'UPLOADED');
-
-    return { success: true };
+  @ApiOperation({
+    summary: 'S3업로드 완료 후, 파일 메타 업데이트',
+  })
+  @ApiOkResponse({
+    type: CompleteUploadResDto,
+    description: '업로드 성공 여부',
+  })
+  async completeUpload(
+    @Body() body: CompleteUploadReqDto,
+  ): Promise<CompleteUploadResDto> {
+    try {
+      await this.fileService.updateStatus(body.id, 'UPLOADED');
+      return { success: true };
+    } catch {
+      throw new ServiceUnavailableException({
+        success: false,
+      });
+    }
   }
 }
