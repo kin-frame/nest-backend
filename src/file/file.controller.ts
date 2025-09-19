@@ -56,6 +56,24 @@ export class FileController {
     return { url };
   }
 
+  @Get('presigned-url/thumbnail')
+  @UseGuards(AuthGuard)
+  @ApiOperation({
+    summary: 'S3 버킷에 접근할 수 있는 썸네일 presigned url 요청',
+  })
+  async getPresignedThumbnailUrl(@Query() query: { fileId: number }) {
+    const meta = await this.fileService.getFileKey(query.fileId);
+
+    const command = new GetObjectCommand({
+      Bucket: process.env.AWS_S3_BUCKET,
+      Key: meta?.thumbnailKey,
+    });
+
+    const url = await getSignedUrl(this.s3, command, { expiresIn: 60 * 60 });
+
+    return { url };
+  }
+
   @Post('presigned-url')
   @UseGuards(AuthGuard)
   @ApiOperation({
@@ -114,6 +132,7 @@ export class FileController {
   ): Promise<CompleteUploadResDto> {
     try {
       await this.fileService.updateStatus(body.id, FileStatus.UPLOADED);
+      await this.fileService.updateThumbnail(body.id);
       return { success: true };
     } catch {
       throw new ServiceUnavailableException({

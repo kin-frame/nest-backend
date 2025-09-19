@@ -1,14 +1,22 @@
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 
 import { File, FileStatus } from './file.entity';
+
+import {
+  GetObjectCommand,
+  PutObjectCommand,
+  S3Client,
+} from '@aws-sdk/client-s3';
+import sharp from 'sharp';
 
 @Injectable()
 export class FileService {
   constructor(
     @InjectRepository(File)
     private fileRepo: Repository<File>,
+    @Inject('S3_CLIENT') private readonly s3: S3Client,
   ) {}
 
   async createMeta(data: Partial<File>) {
@@ -25,6 +33,55 @@ export class FileService {
 
   async updateStatus(id: number, status: FileStatus) {
     return this.fileRepo.update({ id }, { status });
+  }
+
+  async updateThumbnail(id: number) {
+    const existing = await this.fileRepo.findOne({
+      where: { id },
+    });
+
+    if (!existing) {
+      throw new Error(`파일이 존재하지 않습니다.`);
+    }
+
+    if (existing.fileType.startsWith('image/')) {
+      const buffer = await this.downloadfromS3(existing.key);
+
+      const resizedBuffer = await sharp(buffer).resize(300).toBuffer();
+
+      if (!resizedBuffer) {
+        throw new Error('이미지 변환에 실패했습니다.');
+      }
+
+      const thumbnailKey = existing.key.replace('uploads/', 'thumbnails/');
+
+      await this.s3.send(
+        new PutObjectCommand({
+          Bucket: process.env.AWS_S3_BUCKET,
+          Key: thumbnailKey,
+          Body: resizedBuffer,
+          ContentType: existing.fileType,
+        }),
+      );
+
+      await this.fileRepo.update(id, { thumbnailKey });
+    }
+  }
+
+  async downloadfromS3(key: string) {
+    const command = new GetObjectCommand({
+      Bucket: process.env.AWS_S3_BUCKET,
+      Key: key,
+    });
+    const response = await this.s3.send(command);
+
+    const stream = await response.Body?.transformToByteArray();
+
+    if (!stream) return;
+
+    const buffer = Buffer.from(stream);
+
+    return buffer;
   }
 
   async getFileKey(id: number) {

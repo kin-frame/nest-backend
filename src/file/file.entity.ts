@@ -52,4 +52,8 @@ export class File {
 
   @UpdateDateColumn()
   updatedAt: Date;
+
+  // S3 Key (uploads/userId/...)
+  @Column({ default: '' })
+  thumbnailKey: string;
 }
