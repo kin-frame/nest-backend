@@ -47,7 +47,7 @@ export class FileService {
     if (existing.fileType.startsWith('image/')) {
       const buffer = await this.downloadfromS3(existing.key);
 
-      const resizedBuffer = await sharp(buffer).resize(300).toBuffer();
+      const resizedBuffer = await sharp(buffer).resize(300).rotate().toBuffer();
 
       if (!resizedBuffer) {
         throw new Error('이미지 변환에 실패했습니다.');
