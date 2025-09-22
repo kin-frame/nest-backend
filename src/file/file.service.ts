@@ -1,14 +1,14 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-
-import { File, FileStatus } from './file.entity';
-
 import {
   GetObjectCommand,
   PutObjectCommand,
   S3Client,
 } from '@aws-sdk/client-s3';
+import { Repository } from 'typeorm';
+
+import { File, FileStatus } from './file.entity';
+
 import sharp from 'sharp';
 
 @Injectable()

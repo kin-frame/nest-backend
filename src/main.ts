@@ -27,8 +27,8 @@ async function bootstrap() {
 
 bootstrap()
   .then(() => {
-    console.log(`Success, listen to ${process.env.PORT}...`);
+    console.dir(`Success, listen to ${process.env.PORT}...`);
   })
   .catch(() => {
-    console.log('에러 발생');
+    console.error('에러 발생');
   });

@@ -19,7 +19,6 @@ export class AuthController {
   @Get('google/callback')
   @UseGuards(AuthGuard('google'))
   async googleCallback(@Req() req: Request, @Res() res: Response) {
-    // console.log(req.user);
     try {
       if (!req.user) {
         throw new Error('구글 인증에 실패했습니다.');

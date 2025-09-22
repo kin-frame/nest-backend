@@ -40,9 +40,11 @@ export default [
           groups: [
             [
               '^@nestjs',
+              '^@aws',
               '^express',
               '^passport',
               '^cookie-parser',
+              'ffmpeg',
               '^typeorm',
               '^jsonwebtoken',
             ],

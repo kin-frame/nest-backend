@@ -3,20 +3,33 @@ import {
   ConflictException,
   Controller,
   Get,
+  Headers,
   Inject,
+  Param,
   Post,
   Query,
   Req,
+  Res,
   ServiceUnavailableException,
   UseGuards,
 } from '@nestjs/common';
 import { ApiOkResponse, ApiOperation } from '@nestjs/swagger';
-import { type Request } from 'express';
+import {
+  GetObjectCommand,
+  PutObjectCommand,
+  S3Client,
+} from '@aws-sdk/client-s3';
+import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
+import { type Request, type Response } from 'express';
 
 import { AuthGuard } from 'src/common/auth.guard';
 import { PagebleReqDto } from 'src/common/dto/pageble.dto';
 import { CustomJwtPayload } from 'src/types/express';
 import { CompleteUploadReqDto, CompleteUploadResDto } from './dto/complete.dto';
+import {
+  GenerateThumbnailReqDto,
+  GenerateThumbnailResDto,
+} from './dto/generate-thumbnail.dto';
 import {
   GetPresignedUrlReqDto,
   GetPresignedUrlResDto,
@@ -24,12 +37,7 @@ import {
 import { FileStatus } from './file.entity';
 import { FileService } from './file.service';
 
-import {
-  GetObjectCommand,
-  PutObjectCommand,
-  S3Client,
-} from '@aws-sdk/client-s3';
-import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
+import { Readable } from 'stream';
 
 @Controller('file')
 export class FileController {
@@ -141,6 +149,26 @@ export class FileController {
     }
   }
 
+  @Post('generate-thumbnail')
+  @UseGuards(AuthGuard)
+  @ApiOperation({
+    summary: '이미지 또는 동영상의 썸네일을 생성/교체',
+  })
+  @ApiOkResponse({
+    type: GenerateThumbnailResDto,
+  })
+  async generateThumbnail(@Body() body: GenerateThumbnailReqDto) {
+    try {
+      await this.fileService.updateThumbnail(body.id);
+      return { success: true };
+    } catch (error) {
+      console.error('generateThumbnail', error);
+      throw new ServiceUnavailableException({
+        success: false,
+      });
+    }
+  }
+
   @Get()
   @UseGuards(AuthGuard)
   @ApiOperation({
@@ -158,5 +186,61 @@ export class FileController {
         userId: jwtPayload.id,
       },
     );
+  }
+
+  @Get(':id')
+  @UseGuards(AuthGuard)
+  @ApiOperation({
+    summary: '사용자가 업로드한 파일 상세정보 반환',
+  })
+  async getFile(@Param('id') id: number) {
+    return this.fileService.getFileKey(id);
+  }
+
+  @Get('stream/:id')
+  @UseGuards(AuthGuard)
+  @ApiOperation({
+    summary: '동영상 스트리밍',
+  })
+  async streamVideo(
+    @Param('id') id: number,
+    @Headers('range') range: string,
+    @Res() res: Response,
+  ) {
+    // 1. DB에서 S3 key 조회
+    const file = await this.fileService.getFileKey(id);
+
+    // 2. 파일 크기 알아오기 (HEAD 요청)
+    const headCommand = new GetObjectCommand({
+      Bucket: process.env.AWS_S3_BUCKET!,
+      Key: file?.key,
+    });
+    const head = await this.s3.send(headCommand); // v3에서는 HeadObjectCommand 사용
+
+    const fileSize = Number(head.ContentLength);
+    const [startStr, endStr] = range.replace(/bytes=/, '').split('-');
+    const start = parseInt(startStr, 10);
+    const end = endStr ? parseInt(endStr, 10) : fileSize - 1;
+
+    const chunkSize = end - start + 1;
+
+    // 3. Range로 S3에서 가져오기
+    const command = new GetObjectCommand({
+      Bucket: process.env.AWS_S3_BUCKET!,
+      Key: file?.key,
+      Range: `bytes=${start}-${end}`,
+    });
+    const s3Object = await this.s3.send(command);
+
+    // 4. 응답 헤더 설정
+    res.writeHead(206, {
+      'Content-Range': `bytes ${start}-${end}/${fileSize}`,
+      'Accept-Ranges': 'bytes',
+      'Content-Length': chunkSize,
+      'Content-Type': file?.fileType, // ex: video/mp4
+    });
+
+    const stream = s3Object.Body as Readable;
+    stream.pipe(res);
   }
 }
