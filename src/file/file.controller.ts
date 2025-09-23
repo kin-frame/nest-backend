@@ -223,24 +223,30 @@ export class FileController {
     const end = endStr ? parseInt(endStr, 10) : fileSize - 1;
 
     const chunkSize = end - start + 1;
+    try {
+      // 3. Range로 S3에서 가져오기
+      const command = new GetObjectCommand({
+        Bucket: process.env.AWS_S3_BUCKET!,
+        Key: file?.key,
+        Range: `bytes=${start}-${end}`,
+      });
+      const s3Object = await this.s3.send(command);
 
-    // 3. Range로 S3에서 가져오기
-    const command = new GetObjectCommand({
-      Bucket: process.env.AWS_S3_BUCKET!,
-      Key: file?.key,
-      Range: `bytes=${start}-${end}`,
-    });
-    const s3Object = await this.s3.send(command);
+      // 4. 응답 헤더 설정
+      res.writeHead(206, {
+        'Content-Range': `bytes ${start}-${end}/${fileSize}`,
+        'Accept-Ranges': 'bytes',
+        'Content-Length': chunkSize,
+        'Content-Type': file?.fileType, // ex: video/mp4
+      });
 
-    // 4. 응답 헤더 설정
-    res.writeHead(206, {
-      'Content-Range': `bytes ${start}-${end}/${fileSize}`,
-      'Accept-Ranges': 'bytes',
-      'Content-Length': chunkSize,
-      'Content-Type': file?.fileType, // ex: video/mp4
-    });
-
-    const stream = s3Object.Body as Readable;
-    stream.pipe(res);
+      const stream = s3Object.Body as Readable;
+      stream.pipe(res);
+    } catch (error) {
+      console.error('stream', error);
+      throw new ServiceUnavailableException({
+        success: false,
+      });
+    }
   }
 }
