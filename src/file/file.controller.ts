@@ -16,6 +16,7 @@ import {
 import { ApiOkResponse, ApiOperation } from '@nestjs/swagger';
 import {
   GetObjectCommand,
+  HeadObjectCommand,
   PutObjectCommand,
   S3Client,
 } from '@aws-sdk/client-s3';
@@ -211,7 +212,7 @@ export class FileController {
     const file = await this.fileService.getFileKey(id);
 
     // 2. 파일 크기 알아오기 (HEAD 요청)
-    const headCommand = new GetObjectCommand({
+    const headCommand = new HeadObjectCommand({
       Bucket: process.env.AWS_S3_BUCKET!,
       Key: file?.key,
     });
