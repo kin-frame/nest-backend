@@ -46,4 +46,7 @@ export class User {
 
   @Column({ nullable: true })
   lastLoginedIp: string;
+
+  @Column({ type: 'varchar', length: 255, nullable: true })
+  sessionId: string | null;
 }

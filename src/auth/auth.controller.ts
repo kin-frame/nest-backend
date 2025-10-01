@@ -1,4 +1,12 @@
-import { Controller, Get, Post, Req, Res, UseGuards } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Query,
+  Req,
+  Res,
+  UseGuards,
+} from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { type Request, type Response } from 'express';
 
@@ -25,6 +33,25 @@ export class AuthController {
       }
 
       const user = await this.userService.findOrCreate(req.user);
+      const sessionId = await this.authService.issueSessionId(user.id);
+
+      return res.redirect(
+        `${process.env.CLIENT_URL}/auth/callback?session_id=${sessionId}`,
+      );
+    } catch (error) {
+      console.error(error);
+      return res.redirect(`${process.env.CLIENT_URL}/login?error=oauth_failed`);
+    }
+  }
+
+  @Get('token')
+  async generateAccessToken(
+    @Req() req: Request,
+    @Query() query: { sessionId: string },
+    @Res() res: Response,
+  ) {
+    try {
+      const user = await this.userService.findBySessionId(query.sessionId);
 
       const { access_token } = this.authService.issueToken(user);
 
@@ -37,6 +64,7 @@ export class AuthController {
       // 로그인 성공하고 날짜 및 IP 업데이트
       await this.userService.updateLastLoginedAt(user.id);
       await this.userService.updateLastLoginedIp(user.id, req.ip);
+      await this.userService.deleteSessionId(user.id);
 
       if (user.status === 'PENDING') {
         // PENDING이면 회원가입 페이지로 리다이렉트
@@ -50,9 +78,8 @@ export class AuthController {
 
       // APPROVED라면 홈으로 리다이렉트
       return res.redirect(`${process.env.CLIENT_URL}/home`);
-    } catch (error) {
-      console.error(error);
-      return res.redirect(`${process.env.CLIENT_URL}/login?error=oauth_failed`);
+    } catch {
+      return res.redirect(`${process.env.CLIENT_URL}/login`);
     }
   }
 

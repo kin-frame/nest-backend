@@ -47,6 +47,7 @@ export default [
               'ffmpeg',
               '^typeorm',
               '^jsonwebtoken',
+              '^crypto',
             ],
             [
               '^@app',

@@ -27,6 +27,18 @@ export class UserService {
     return user;
   }
 
+  async findBySessionId(sessionId: string) {
+    const user = await this.userRepo.findOne({
+      where: { sessionId },
+    });
+
+    if (!user) {
+      throw new NotFoundException('사용자를 찾을 수 없습니다.');
+    }
+
+    return user;
+  }
+
   async updateLastLoginedAt(id: number) {
     const user = await this.userRepo.update(
       {
@@ -36,6 +48,28 @@ export class UserService {
     );
 
     return user;
+  }
+
+  async updateSessionId(id: number, sessionId: string) {
+    const user = await this.userRepo.update(
+      {
+        id,
+      },
+      { sessionId },
+    );
+
+    return user;
+  }
+
+  async deleteSessionId(id: number) {
+    return this.userRepo.update(
+      {
+        id,
+      },
+      {
+        sessionId: null,
+      },
+    );
   }
 
   async updateLastLoginedIp(id: number, ip?: string) {
