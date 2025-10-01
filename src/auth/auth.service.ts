@@ -8,7 +8,12 @@ export class AuthService {
   constructor(private jwtService: JwtService) {}
 
   issueToken(user: User) {
-    const payload = { id: user.id, email: user.email, status: user.status };
+    const payload = {
+      id: user.id,
+      email: user.email,
+      status: user.status,
+      role: user.role,
+    };
 
     return {
       access_token: this.jwtService.sign(payload),

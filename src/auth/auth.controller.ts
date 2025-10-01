@@ -1,4 +1,4 @@
-import { Controller, Get, Req, Res, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Req, Res, UseGuards } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { type Request, type Response } from 'express';
 
@@ -54,6 +54,13 @@ export class AuthController {
       console.error(error);
       return res.redirect(`${process.env.CLIENT_URL}/login?error=oauth_failed`);
     }
+  }
+
+  @Post('logout')
+  logout(@Res() res: Response) {
+    res.clearCookie('access_token');
+
+    return res.status(204).send();
   }
 }
 
