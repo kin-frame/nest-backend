@@ -25,6 +25,7 @@ import { type Request, type Response } from 'express';
 
 import { AuthGuard } from 'src/common/auth.guard';
 import { PagebleReqDto } from 'src/common/dto/pageble.dto';
+import { StatusGuard } from 'src/common/status.guard';
 import { CustomJwtPayload } from 'src/types/express';
 import { CompleteUploadReqDto, CompleteUploadResDto } from './dto/complete.dto';
 import {
@@ -48,7 +49,7 @@ export class FileController {
   ) {}
 
   @Get('presigned-url')
-  @UseGuards(AuthGuard)
+  @UseGuards(AuthGuard, StatusGuard)
   @ApiOperation({
     summary: 'S3 버킷에 접근할 수 있는 presigned url 요청',
   })
@@ -66,7 +67,7 @@ export class FileController {
   }
 
   @Get('presigned-url/thumbnail')
-  @UseGuards(AuthGuard)
+  @UseGuards(AuthGuard, StatusGuard)
   @ApiOperation({
     summary: 'S3 버킷에 접근할 수 있는 썸네일 presigned url 요청',
   })
@@ -84,7 +85,7 @@ export class FileController {
   }
 
   @Post('presigned-url')
-  @UseGuards(AuthGuard)
+  @UseGuards(AuthGuard, StatusGuard)
   @ApiOperation({
     summary: 'presigned url 요청',
     description:
@@ -128,7 +129,7 @@ export class FileController {
   }
 
   @Post('complete')
-  @UseGuards(AuthGuard)
+  @UseGuards(AuthGuard, StatusGuard)
   @ApiOperation({
     summary: 'S3업로드 완료 후, 파일 메타 업데이트',
   })
@@ -151,7 +152,7 @@ export class FileController {
   }
 
   @Post('generate-thumbnail')
-  @UseGuards(AuthGuard)
+  @UseGuards(AuthGuard, StatusGuard)
   @ApiOperation({
     summary: '이미지 또는 동영상의 썸네일을 생성/교체',
   })
@@ -171,7 +172,7 @@ export class FileController {
   }
 
   @Get()
-  @UseGuards(AuthGuard)
+  @UseGuards(AuthGuard, StatusGuard)
   @ApiOperation({
     summary: '사용자가 업로드한 파일 목록 반환',
   })
@@ -190,7 +191,7 @@ export class FileController {
   }
 
   @Get(':id')
-  @UseGuards(AuthGuard)
+  @UseGuards(AuthGuard, StatusGuard)
   @ApiOperation({
     summary: '사용자가 업로드한 파일 상세정보 반환',
   })
@@ -199,7 +200,7 @@ export class FileController {
   }
 
   @Get('stream/:id')
-  @UseGuards(AuthGuard)
+  @UseGuards(AuthGuard, StatusGuard)
   @ApiOperation({
     summary: '동영상 스트리밍',
   })

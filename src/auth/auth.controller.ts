@@ -34,6 +34,10 @@ export class AuthController {
         sameSite: 'strict',
       });
 
+      // 로그인 성공하고 날짜 및 IP 업데이트
+      await this.userService.updateLastLoginedAt(user.id);
+      await this.userService.updateLastLoginedIp(user.id, req.ip);
+
       if (user.status === 'PENDING') {
         // PENDING이면 회원가입 페이지로 리다이렉트
         return res.redirect(`${process.env.CLIENT_URL}/signup`);

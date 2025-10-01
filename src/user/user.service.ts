@@ -15,6 +15,40 @@ import { User } from './user.entity';
 export class UserService {
   constructor(@InjectRepository(User) private userRepo: Repository<User>) {}
 
+  async findById(id: number) {
+    const user = await this.userRepo.findOne({
+      where: { id },
+    });
+
+    if (!user) {
+      throw new NotFoundException('사용자를 찾을 수 없습니다.');
+    }
+
+    return user;
+  }
+
+  async updateLastLoginedAt(id: number) {
+    const user = await this.userRepo.update(
+      {
+        id,
+      },
+      { lastLoginedAt: new Date() },
+    );
+
+    return user;
+  }
+
+  async updateLastLoginedIp(id: number, ip?: string) {
+    const user = await this.userRepo.update(
+      {
+        id,
+      },
+      { lastLoginedIp: ip },
+    );
+
+    return user;
+  }
+
   async findOrCreate(googleUser: GoogleUser) {
     let user = await this.userRepo.findOne({
       where: { email: googleUser.email },
