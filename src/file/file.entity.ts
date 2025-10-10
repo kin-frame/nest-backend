@@ -56,4 +56,10 @@ export class File {
   // S3 Key (uploads/userId/...)
   @Column({ default: '' })
   thumbnailKey: string;
+
+  @Column()
+  width: number;
+
+  @Column()
+  height: number;
 }
