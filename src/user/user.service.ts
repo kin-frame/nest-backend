@@ -137,4 +137,11 @@ export class UserService {
       status: user?.status,
     };
   }
+
+  async getUserProfile(userId: number) {
+    return this.userRepo.findOne({
+      where: { id: userId },
+      select: { name: true, email: true },
+    });
+  }
 }

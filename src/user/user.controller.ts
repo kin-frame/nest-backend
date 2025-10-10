@@ -4,6 +4,7 @@ import { type Request } from 'express';
 
 import { AuthGuard } from 'src/common/auth.guard';
 import { CustomJwtPayload } from 'src/types/express';
+import { GetUserProfileResDto } from './dto/getUserProfile.dto';
 import { UserSignupCheckResDto, UserSignupDto } from './dto/signup.dto';
 import { UserService } from './user.service';
 
@@ -36,5 +37,21 @@ export class UserController {
     const jwtPayload = req.jwt.payload as CustomJwtPayload;
 
     return this.userService.signupCheck(jwtPayload.id);
+  }
+
+  @Get('me')
+  @UseGuards(AuthGuard)
+  @ApiOperation({
+    summary: '사용자 프로필 조회',
+    description: '사용자의 정보를 조회합니다.',
+  })
+  @ApiOkResponse({
+    type: GetUserProfileResDto,
+    description: '사용자 정보 반환',
+  })
+  async getUserInfoSelf(@Req() req: Request) {
+    const jwtPayload = req.jwt.payload as CustomJwtPayload;
+
+    return this.userService.getUserProfile(jwtPayload.id);
   }
 }
