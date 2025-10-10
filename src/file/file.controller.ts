@@ -112,6 +112,8 @@ export class FileController {
         fileSize: body.fileSize,
         fileType: body.fileType,
         status: FileStatus.PENDING,
+        width: body.width,
+        height: body.height,
       });
 
       const command = new PutObjectCommand({

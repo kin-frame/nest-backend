@@ -20,6 +20,18 @@ export class GetPresignedUrlReqDto {
     description: '파일 유형, input File 객체의 값 그대로 업로드',
   })
   fileType: string;
+
+  @ApiProperty({
+    description:
+      '이미지 또는 비디오의 width. 이미지는 naturalWidth, 비디오는 videoWidth 사용',
+  })
+  width: number;
+
+  @ApiProperty({
+    description:
+      '이미지 또는 비디오의 height. 이미지는 naturalHeight, 비디오는 videoHeight 사용',
+  })
+  height: number;
 }
 
 export class GetPresignedUrlResDto {
