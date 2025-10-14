@@ -46,6 +46,7 @@ export default [
               '^cookie-parser',
               'ffmpeg',
               '^typeorm',
+              '^class-validator',
               '^jsonwebtoken',
               '^crypto',
             ],

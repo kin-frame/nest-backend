@@ -2,10 +2,13 @@ import {
   Column,
   CreateDateColumn,
   Entity,
+  Index,
+  ManyToOne,
   PrimaryGeneratedColumn,
-  Unique,
   UpdateDateColumn,
 } from 'typeorm';
+
+import { Directory } from 'src/directory/directory.entity';
 
 export enum FileStatus {
   PENDING = 'PENDING', // 업로드 대기 중
@@ -15,12 +18,13 @@ export enum FileStatus {
 }
 
 @Entity()
-@Unique(['userId', 'fileName']) // 같은 사용자 + 같은 파일명 금지
+@Index(['userId', 'directory', 'fileName'], { unique: true }) // 같은 폴더 내 같은 파일명 금지
 export class File {
   @PrimaryGeneratedColumn()
   id: number;
 
   // 파일 소유자 (userId)
+  @Index()
   @Column()
   userId: number;
 
@@ -54,7 +58,7 @@ export class File {
   updatedAt: Date;
 
   // S3 Key (uploads/userId/...)
-  @Column({ default: '' })
+  @Column({ nullable: true })
   thumbnailKey: string;
 
   @Column()
@@ -62,4 +66,7 @@ export class File {
 
   @Column()
   height: number;
+
+  @ManyToOne(() => Directory, { nullable: true, onDelete: 'SET NULL' })
+  directory: Directory;
 }

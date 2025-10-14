@@ -1,16 +1,20 @@
 import { ApiProperty } from '@nestjs/swagger';
+import { IsNotEmpty } from 'class-validator';
 
 export class PagebleReqDto {
+  @IsNotEmpty()
   @ApiProperty({
     description: '페이지',
   })
   page: number;
 
+  @IsNotEmpty()
   @ApiProperty({
     description: '페이지 사이즈',
   })
   size: number;
 
+  @IsNotEmpty()
   @ApiProperty({
     description: '정렬방식. field,asc|desc 형식으로 사용',
   })
