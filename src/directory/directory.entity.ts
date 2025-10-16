@@ -18,7 +18,7 @@ export class Directory {
 
   @Index()
   @Column({ nullable: true })
-  parentId?: number; // 루트 디렉토리 지원
+  parentId: number; // 루트 디렉토리 지원
 
   // 디렉토리 소유자 (userId)
   @Index()
@@ -31,6 +31,9 @@ export class Directory {
 
   @Column({ default: false })
   isDeleted: boolean; // 디렉토리 삭제시 복원 가능
+
+  @Column({ default: false })
+  isRoot: boolean; // 루트 디렉토리 여부
 
   @Column({ nullable: true })
   path: string; // 캐시용 (예: "/photos/2025/trip")

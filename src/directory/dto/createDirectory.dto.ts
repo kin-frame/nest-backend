@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNotEmpty, IsOptional, Length, Matches } from 'class-validator';
+import { IsNotEmpty, Length, Matches } from 'class-validator';
 
 export class CreateDirectoryDto {
   @IsNotEmpty()
@@ -13,8 +13,8 @@ export class CreateDirectoryDto {
   directoryName: string;
 
   @ApiProperty({
-    description: '디렉토리명',
+    description: '상위 디렉토리 ID',
   })
-  @IsOptional()
-  parentId?: number;
+  @IsNotEmpty()
+  parentId: number;
 }

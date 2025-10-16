@@ -22,6 +22,14 @@ export class DirectoryService {
       throw new BadRequestException('예약어는 사용할 수 없습니다.');
     }
 
+    const info = await this.getInfo(data.parentId, data.userId);
+
+    if (!info) {
+      throw new BadRequestException(
+        '해당 디렉토리가 존재하지 않거나, 다른 사용자의 디렉토리입니다.',
+      );
+    }
+
     const existing = await this.directoryRepo.findOne({
       where: {
         userId: data.userId,
@@ -36,5 +44,36 @@ export class DirectoryService {
     }
 
     return this.directoryRepo.save(data);
+  }
+
+  async getInfo(directoryId: number, userId: number) {
+    return this.directoryRepo.findOne({
+      where: {
+        id: directoryId,
+        userId,
+        isDeleted: false,
+      },
+      relations: {
+        files: true,
+      },
+    });
+  }
+
+  async getRoot(userId: number) {
+    return this.directoryRepo.findOne({
+      where: {
+        userId,
+      },
+    });
+  }
+
+  async getChildren(directoryId: number, userId: number) {
+    return this.directoryRepo.find({
+      where: {
+        parentId: directoryId,
+        userId,
+        isDeleted: false,
+      },
+    });
   }
 }
