@@ -39,6 +39,12 @@ export class GetPresignedUrlReqDto {
       '이미지 또는 비디오의 height. 이미지는 naturalHeight, 비디오는 videoHeight 사용',
   })
   height: number;
+
+  @IsNotEmpty()
+  @ApiProperty({
+    description: '디렉토리 ID',
+  })
+  directoryId: number;
 }
 
 export class GetPresignedUrlResDto {

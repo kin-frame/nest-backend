@@ -5,6 +5,7 @@ import {
   Get,
   Headers,
   Inject,
+  NotFoundException,
   Param,
   Post,
   Query,
@@ -26,6 +27,7 @@ import { type Request, type Response } from 'express';
 import { AuthGuard } from 'src/common/auth.guard';
 import { PagebleReqDto } from 'src/common/dto/pageble.dto';
 import { StatusGuard } from 'src/common/status.guard';
+import { DirectoryService } from 'src/directory/directory.service';
 import { CustomJwtPayload } from 'src/types/express';
 import { CompleteUploadReqDto, CompleteUploadResDto } from './dto/complete.dto';
 import {
@@ -44,6 +46,7 @@ import { Readable } from 'stream';
 @Controller('file')
 export class FileController {
   constructor(
+    private readonly directoryService: DirectoryService,
     private readonly fileService: FileService,
     @Inject('S3_CLIENT') private readonly s3: S3Client,
   ) {}
@@ -102,6 +105,15 @@ export class FileController {
     const jwtPayload = req.jwt.payload as CustomJwtPayload;
     const key = `uploads/${jwtPayload.id}/${Date.now()}-${body.fileName}`;
 
+    const directory = await this.directoryService.getInfo(
+      body.directoryId,
+      jwtPayload.id,
+    );
+
+    if (!directory) {
+      return new NotFoundException('디렉토리를 찾을 수 없습니다.');
+    }
+
     try {
       // DB에 PENDING 상태로 저장
       const meta = await this.fileService.createMeta({
@@ -114,6 +126,7 @@ export class FileController {
         status: FileStatus.PENDING,
         width: body.width,
         height: body.height,
+        directory,
       });
 
       const command = new PutObjectCommand({
