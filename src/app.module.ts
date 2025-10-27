@@ -7,6 +7,7 @@ import { DirectoryModule } from './directory/directory.module';
 import { FileModule } from './file/file.module';
 import { HealthModule } from './health/health.module';
 import { UserModule } from './user/user.module';
+import { AdminModule } from './admin/admin.module';
 
 @Module({
   imports: [
@@ -28,6 +29,7 @@ import { UserModule } from './user/user.module';
     UserModule,
     FileModule,
     DirectoryModule,
+    AdminModule,
   ],
 })
 export class AppModule {}
