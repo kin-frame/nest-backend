@@ -11,9 +11,40 @@ export class AdminService {
     private userRepo: Repository<User>,
   ) {}
 
-  async getUserList(page: number, size: number, sort: string[]) {
+  async getUserList(
+    page: number,
+    size: number,
+    sort: string[],
+    keywordType?: string,
+    keyword?: string,
+  ) {
     const alias = 'user';
     const qb = this.userRepo.createQueryBuilder(alias);
+
+    // Filtering
+    if (keyword && String(keyword).trim() !== '') {
+      const type = (keywordType || '').toLowerCase();
+      const trimmed = String(keyword).trim();
+
+      if (type === 'id') {
+        const idNum = Number(trimmed);
+        if (!Number.isNaN(idNum)) {
+          qb.andWhere(`${alias}.id = :id`, { id: idNum });
+        } else {
+          // Impossible condition to return empty result when id is invalid
+          qb.andWhere('1=0');
+        }
+      } else if (type === 'email' || type === 'name') {
+        qb.andWhere(`${alias}.${type} LIKE :kw`, { kw: `%${trimmed}%` });
+      } else if (type === 'status' || type === 'role') {
+        qb.andWhere(`${alias}.${type} = :kw`, { kw: trimmed });
+      } else if (type === 'all' || type === '') {
+        // Broad search across common text fields when type is 'all' or omitted
+        qb.andWhere(`(${alias}.name LIKE :kw OR ${alias}.email LIKE :kw)`, {
+          kw: `%${trimmed}%`,
+        });
+      }
+    }
 
     if (sort.length > 0) {
       const [field, order] = sort[0].split(',');

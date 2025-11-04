@@ -3,7 +3,7 @@ import { ApiOperation } from '@nestjs/swagger';
 
 import { AdminGuard } from 'src/common/admin.guard';
 import { AuthGuard } from 'src/common/auth.guard';
-import { PagebleReqDto } from 'src/common/dto/pageble.dto';
+import { GetAdminUserListReqDto } from './dto/user.dto';
 import { AdminService } from './admin.service';
 
 @Controller('admin')
@@ -16,13 +16,16 @@ export class AdminController {
     summary: '관리자 > 사용자 목록 조회',
     description: '사용자 목록을 조회합니다.',
   })
-  getAdminUserList(@Query() query: PagebleReqDto) {
+  getAdminUserList(@Query() query: GetAdminUserListReqDto) {
     const sortArr: string[] = [];
+    console.log(query);
 
     return this.adminService.getUserList(
       query.page,
       query.size,
       sortArr.concat(query.sort),
+      query.keywordType,
+      query.keyword,
     );
   }
 }
