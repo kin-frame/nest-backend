@@ -1,8 +1,13 @@
-import { Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 
 import { User } from 'src/user/user.entity';
+import { UpdateAdminUserInfoReqDto } from './dto/user.dto';
 
 @Injectable()
 export class AdminService {
@@ -67,5 +72,33 @@ export class AdminService {
       totalPages: Math.ceil(totalCount / size),
       totalCount,
     };
+  }
+
+  async getUserInfo(id: number) {
+    const user = await this.userRepo.findOne({ where: { id } });
+
+    if (!user) {
+      throw new NotFoundException('사용자를 찾을 수 없습니다.');
+    }
+
+    return user;
+  }
+
+  async updateUserInfo(id: number, dto: UpdateAdminUserInfoReqDto) {
+    const payload: Partial<User> = {};
+
+    if (dto.fileCount !== undefined) payload.fileCount = dto.fileCount;
+    if (dto.maxFileSize !== undefined) payload.maxFileSize = dto.maxFileSize;
+
+    if (Object.keys(payload).length === 0) {
+      throw new BadRequestException('수정할 값이 없습니다.');
+    }
+
+    const result = await this.userRepo.update({ id }, payload);
+    if (!result.affected) {
+      throw new NotFoundException('사용자를 찾을 수 없습니다.');
+    }
+
+    return this.userRepo.findOne({ where: { id } });
   }
 }
