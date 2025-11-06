@@ -44,7 +44,7 @@ export class User {
     default: 'GUEST',
   })
   @Column({ default: 'GUEST' })
-  role: 'ADMIN' | 'USER' | 'GUEST';
+  role: UserRole;
 
   @ApiProperty({ example: 3, minimum: 0 })
   @Column({ default: 3 })
@@ -88,4 +88,10 @@ export class User {
   })
   @Column({ type: 'varchar', length: 255, nullable: true })
   sessionId: string | null;
+}
+
+export enum UserRole {
+  ADMIN = 'ADMIN',
+  USER = 'USER',
+  GUEST = 'GUEST',
 }

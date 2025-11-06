@@ -18,6 +18,7 @@ import {
   GetAdminUserInfoResDto,
   GetAdminUserListReqDto,
   UpdateAdminUserInfoReqDto,
+  UpdateUserRoleReqDto,
 } from './dto/user.dto';
 import { AdminService } from './admin.service';
 
@@ -73,5 +74,22 @@ export class AdminController {
     @Body() dto: UpdateAdminUserInfoReqDto,
   ) {
     return this.adminService.updateUserInfo(id, dto);
+  }
+
+  @Patch('user/:id/role')
+  @UseGuards(AuthGuard, AdminGuard)
+  @ApiOperation({
+    summary: '관리자 > 사용자 권한 수정',
+    description: '사용자의 권한을 수정합니다.',
+  })
+  @ApiOkResponse({
+    type: GetAdminUserInfoResDto,
+    description: '수정된 사용자 정보 반환',
+  })
+  updateUserRole(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: UpdateUserRoleReqDto,
+  ) {
+    return this.adminService.updateUserRole(id, dto);
   }
 }

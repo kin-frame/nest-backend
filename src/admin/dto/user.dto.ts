@@ -1,8 +1,15 @@
-import { ApiPropertyOptional, PickType } from '@nestjs/swagger';
-import { IsIn, IsInt, IsOptional, IsString, Min } from 'class-validator';
+import { ApiProperty, ApiPropertyOptional, PickType } from '@nestjs/swagger';
+import {
+  IsEnum,
+  IsIn,
+  IsInt,
+  IsOptional,
+  IsString,
+  Min,
+} from 'class-validator';
 
 import { PageableReqDto } from 'src/common/dto/pageable.dto';
-import { User } from 'src/user/user.entity';
+import { User, UserRole } from 'src/user/user.entity';
 
 export class GetAdminUserListItemResDto extends PickType(User, [
   'id',
@@ -63,4 +70,9 @@ export class UpdateAdminUserInfoReqDto {
     example: 10485760,
   })
   maxFileSize?: number;
+}
+export class UpdateUserRoleReqDto {
+  @IsEnum(UserRole)
+  @ApiProperty({ description: '사용자 권한', example: 'GUEST' })
+  role: UserRole;
 }
