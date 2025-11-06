@@ -12,6 +12,8 @@ import { ApiOkResponse, ApiOperation } from '@nestjs/swagger';
 
 import { AdminGuard } from 'src/common/admin.guard';
 import { AuthGuard } from 'src/common/auth.guard';
+import { ApiPageableResponse } from 'src/common/dto/pageable.dto';
+import { User } from 'src/user/user.entity';
 import {
   GetAdminUserInfoResDto,
   GetAdminUserListReqDto,
@@ -29,6 +31,7 @@ export class AdminController {
     summary: '관리자 > 사용자 목록 조회',
     description: '사용자 목록을 조회합니다.',
   })
+  @ApiPageableResponse(User)
   getAdminUserList(@Query() query: GetAdminUserListReqDto) {
     const sortArr: string[] = [];
 

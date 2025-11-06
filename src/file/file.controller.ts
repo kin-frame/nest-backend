@@ -25,11 +25,15 @@ import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { type Request, type Response } from 'express';
 
 import { AuthGuard } from 'src/common/auth.guard';
-import { PagebleReqDto } from 'src/common/dto/pageble.dto';
+import {
+  ApiPageableResponse,
+  PageableReqDto,
+} from 'src/common/dto/pageable.dto';
 import { StatusGuard } from 'src/common/status.guard';
 import { DirectoryService } from 'src/directory/directory.service';
 import { CustomJwtPayload } from 'src/types/express';
 import { CompleteUploadReqDto, CompleteUploadResDto } from './dto/complete.dto';
+import { FileListItemDto } from './dto/file-list.dto';
 import {
   GenerateThumbnailReqDto,
   GenerateThumbnailResDto,
@@ -38,7 +42,7 @@ import {
   GetPresignedUrlReqDto,
   GetPresignedUrlResDto,
 } from './dto/presigned-url.dto';
-import { FileStatus } from './file.entity';
+import { File, FileStatus } from './file.entity';
 import { FileService } from './file.service';
 
 import { Readable } from 'stream';
@@ -191,7 +195,8 @@ export class FileController {
   @ApiOperation({
     summary: '사용자가 업로드한 파일 목록 반환',
   })
-  async getFiles(@Query() query: PagebleReqDto, @Req() req: Request) {
+  @ApiPageableResponse(FileListItemDto)
+  async getFiles(@Query() query: PageableReqDto, @Req() req: Request) {
     const jwtPayload = req.jwt.payload as CustomJwtPayload;
     const sortArr: string[] = [];
 
@@ -209,6 +214,10 @@ export class FileController {
   @UseGuards(AuthGuard, StatusGuard)
   @ApiOperation({
     summary: '사용자가 업로드한 파일 상세정보 반환',
+  })
+  @ApiOkResponse({
+    type: FileListItemDto,
+    description: '파일 상세정보',
   })
   async getFile(@Param('id') id: number) {
     return this.fileService.getFileKey(id);

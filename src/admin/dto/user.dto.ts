@@ -1,14 +1,35 @@
-import { ApiPropertyOptional } from '@nestjs/swagger';
+import { ApiPropertyOptional, PickType } from '@nestjs/swagger';
 import { IsIn, IsInt, IsOptional, IsString, Min } from 'class-validator';
 
-import { PagebleReqDto } from 'src/common/dto/pageble.dto';
+import { PageableReqDto } from 'src/common/dto/pageable.dto';
 import { User } from 'src/user/user.entity';
 
-export class GetAdminUserListItemResDto extends User {}
+export class GetAdminUserListItemResDto extends PickType(User, [
+  'id',
+  'email',
+  'name',
+  'status',
+  'role',
+]) {}
 
-export class GetAdminUserInfoResDto extends User {}
+export class GetAdminUserInfoResDto extends PickType(User, [
+  'id',
+  'email',
+  'name',
+  'picture',
+  'status',
+  'role',
+  'fileCount',
+  'maxFileSize',
+  'message',
+  'createdAt',
+  'updatedAt',
+  'lastLoginedAt',
+  'lastLoginedIp',
+  'sessionId',
+]) {}
 
-export class GetAdminUserListReqDto extends PagebleReqDto {
+export class GetAdminUserListReqDto extends PageableReqDto {
   @IsOptional()
   @IsString()
   @IsIn(['id', 'email', 'name', 'status', 'role', 'all'], {

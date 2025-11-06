@@ -1,7 +1,13 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { applyDecorators } from '@nestjs/common';
+import {
+  ApiExtraModels,
+  ApiOkResponse,
+  ApiProperty,
+  getSchemaPath,
+} from '@nestjs/swagger';
 import { IsNotEmpty } from 'class-validator';
 
-export class PagebleReqDto {
+export class PageableReqDto {
   @IsNotEmpty()
   @ApiProperty({
     description: '페이지',
@@ -21,7 +27,7 @@ export class PagebleReqDto {
   sort: string[];
 }
 
-export class PagebleResDto<T> {
+export class PageableResDto<T> {
   content: T[];
 
   @ApiProperty({
@@ -44,3 +50,22 @@ export class PagebleResDto<T> {
   })
   totalCount: number; // = totalElements
 }
+
+// Helper: build an ApiOkResponse that binds T at usage time
+export const ApiPageableResponse = <TModel extends new (...args: any[]) => any>(
+  model: TModel,
+) =>
+  applyDecorators(
+    ApiExtraModels(PageableResDto, model),
+    ApiOkResponse({
+      schema: {
+        allOf: [{ $ref: getSchemaPath(PageableResDto) }],
+        properties: {
+          content: {
+            type: 'array',
+            items: { $ref: getSchemaPath(model) },
+          },
+        },
+      },
+    }),
+  );
