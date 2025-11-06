@@ -2,6 +2,7 @@ import { CanActivate, ExecutionContext, Injectable } from '@nestjs/common';
 import { type Request } from 'express';
 
 import { CustomJwtPayload } from 'src/types/express';
+import { UserRole } from 'src/user/user.entity';
 import { UserService } from 'src/user/user.service';
 
 @Injectable()
@@ -15,7 +16,7 @@ export class AdminGuard implements CanActivate {
 
     const user = await this.userService.findById(userId);
 
-    if (!user || user.role !== 'ADMIN') {
+    if (!user || user.role !== UserRole.ADMIN) {
       return false;
     }
 

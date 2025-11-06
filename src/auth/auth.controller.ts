@@ -59,6 +59,7 @@ export class AuthController {
         httpOnly: true,
         secure: false,
         sameSite: 'strict',
+        expires: new Date(Date.now() + 24 * 60 * 60 * 1000),
       });
 
       // 로그인 성공하고 날짜 및 IP 업데이트
