@@ -15,6 +15,7 @@ import { AuthGuard } from 'src/common/auth.guard';
 import { StatusGuard } from 'src/common/status.guard';
 import { CustomJwtPayload } from 'src/types/express';
 import { CreateDirectoryDto } from './dto/createDirectory.dto';
+import { DeleteDirectoryDto } from './dto/deleteDirectory.dto';
 import { DirectoryService } from './directory.service';
 
 @Controller('directory')
@@ -113,5 +114,21 @@ export class DirectoryController {
     return {
       id: info.id,
     };
+  }
+
+  @Post('delete')
+  @UseGuards(AuthGuard, StatusGuard)
+  @ApiOperation({
+    summary: '디렉토리 삭제',
+  })
+  async deleteDirectory(@Req() req: Request, @Body() body: DeleteDirectoryDto) {
+    const jwtPayload = req.jwt.payload as CustomJwtPayload;
+
+    const result = await this.directoryService.delete({
+      id: body.id,
+      userId: jwtPayload.id,
+    });
+
+    return result;
   }
 }

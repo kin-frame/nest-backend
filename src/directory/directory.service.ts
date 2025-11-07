@@ -4,7 +4,7 @@ import {
   Injectable,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { In, Repository } from 'typeorm';
 
 import { Directory } from './directory.entity';
 
@@ -75,5 +75,49 @@ export class DirectoryService {
         isDeleted: false,
       },
     });
+  }
+
+  async delete(data: Pick<Directory, 'id' | 'userId'>) {
+    const target = await this.directoryRepo.findOne({
+      where: { id: data.id, userId: data.userId, isDeleted: false },
+    });
+
+    if (!target) {
+      throw new BadRequestException('삭제할 디렉토리를 찾을 수 없습니다.');
+    }
+
+    if (target.isRoot) {
+      throw new BadRequestException('루트 디렉토리는 삭제할 수 없습니다.');
+    }
+
+    const ids: number[] = [target.id];
+    const queue: number[] = [target.id];
+
+    while (queue.length > 0) {
+      // Queue를 비우고 전부 batch에 담기
+      const batch = queue.splice(0, queue.length);
+
+      const children = await this.directoryRepo.find({
+        where: batch.map((parentId) => ({
+          parentId,
+          userId: data.userId,
+          isDeleted: false,
+        })),
+        select: { id: true },
+      });
+
+      if (children.length === 0) continue;
+
+      const childIds = children.map((c) => c.id);
+      ids.push(...childIds);
+      queue.push(...childIds);
+    }
+
+    await this.directoryRepo.update(
+      { id: In(ids), userId: data.userId },
+      { isDeleted: true },
+    );
+
+    return { deletedCount: ids.length };
   }
 }
