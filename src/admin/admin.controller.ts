@@ -13,7 +13,7 @@ import { ApiOkResponse, ApiOperation } from '@nestjs/swagger';
 import { AdminGuard } from 'src/common/admin.guard';
 import { AuthGuard } from 'src/common/auth.guard';
 import { ApiPageableResponse } from 'src/common/dto/pageable.dto';
-import { User } from 'src/user/user.entity';
+import { User, UserStatus } from 'src/user/user.entity';
 import {
   GetAdminUserInfoResDto,
   GetAdminUserListReqDto,
@@ -91,5 +91,37 @@ export class AdminController {
     @Body() dto: UpdateUserRoleReqDto,
   ) {
     return this.adminService.updateUserRole(id, dto);
+  }
+
+  @Patch('user/:id/approve')
+  @UseGuards(AuthGuard, AdminGuard)
+  @ApiOperation({
+    summary: '관리자 > 사용자 회원가입 신청 허용',
+    description: '사용자의 회원가입 신청상태를 APPROVED로 변경합니다.',
+  })
+  @ApiOkResponse({
+    type: GetAdminUserInfoResDto,
+    description: '수정된 사용자 정보 반환',
+  })
+  approveUser(@Param('id', ParseIntPipe) id: number) {
+    return this.adminService.updateUserStatus(id, {
+      status: UserStatus.APPROVED,
+    });
+  }
+
+  @Patch('user/:id/reject')
+  @UseGuards(AuthGuard, AdminGuard)
+  @ApiOperation({
+    summary: '관리자 > 사용자 회원가입 신청 거절',
+    description: '사용자의 회원가입 신청상태를 REJECTED로 변경합니다.',
+  })
+  @ApiOkResponse({
+    type: GetAdminUserInfoResDto,
+    description: '수정된 사용자 정보 반환',
+  })
+  rejectUser(@Param('id', ParseIntPipe) id: number) {
+    return this.adminService.updateUserStatus(id, {
+      status: UserStatus.REJECTED,
+    });
   }
 }

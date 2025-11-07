@@ -9,7 +9,7 @@ import { Repository } from 'typeorm';
 
 import { GoogleUser } from 'src/auth/auth.controller';
 import { UserSignupDto } from './dto/signup.dto';
-import { User } from './user.entity';
+import { User, UserStatus } from './user.entity';
 
 @Injectable()
 export class UserService {
@@ -93,7 +93,7 @@ export class UserService {
         email: googleUser.email,
         name: googleUser.name,
         picture: googleUser.picture,
-        status: 'PENDING',
+        status: UserStatus.PENDING,
       });
 
       await this.userRepo.save(user);
@@ -106,17 +106,17 @@ export class UserService {
     const user = await this.userRepo.findOneBy({ id: userId });
     if (!user) throw new NotFoundException('사용자를 찾을 수 없습니다');
 
-    if (user.status === 'SUBMIT') {
+    if (user.status === UserStatus.SUBMIT) {
       throw new ConflictException('이미 회원가입 신청을 완료했습니다.');
     }
 
-    if (user.status === 'APPROVED') {
+    if (user.status === UserStatus.APPROVED) {
       throw new ConflictException('이미 회원가입 완료한 사용자입니다.');
     }
 
     user.name = dto.name;
     user.message = dto.message;
-    user.status = 'SUBMIT'; // 제출상태로 바꾸고 나중에 관리자가 처리
+    user.status = UserStatus.SUBMIT; // 제출상태로 바꾸고 나중에 관리자가 처리
 
     try {
       await this.userRepo.save(user);

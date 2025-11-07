@@ -35,7 +35,7 @@ export class User {
     default: 'PENDING',
   })
   @Column({ default: 'PENDING' })
-  status: 'PENDING' | 'SUBMIT' | 'APPROVED' | 'REJECTED';
+  status: UserStatus;
 
   @ApiProperty({
     enum: ['ADMIN', 'USER', 'GUEST'],
@@ -94,4 +94,11 @@ export enum UserRole {
   ADMIN = 'ADMIN',
   USER = 'USER',
   GUEST = 'GUEST',
+}
+
+export enum UserStatus {
+  PENDING = 'PENDING',
+  SUBMIT = 'SUBMIT',
+  APPROVED = 'APPROVED',
+  REJECTED = 'REJECTED',
 }

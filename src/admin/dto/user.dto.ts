@@ -9,7 +9,7 @@ import {
 } from 'class-validator';
 
 import { PageableReqDto } from 'src/common/dto/pageable.dto';
-import { User, UserRole } from 'src/user/user.entity';
+import { User, UserRole, UserStatus } from 'src/user/user.entity';
 
 export class GetAdminUserListItemResDto extends PickType(User, [
   'id',
@@ -71,8 +71,15 @@ export class UpdateAdminUserInfoReqDto {
   })
   maxFileSize?: number;
 }
+
 export class UpdateUserRoleReqDto {
   @IsEnum(UserRole)
   @ApiProperty({ description: '사용자 권한', example: 'GUEST' })
   role: UserRole;
+}
+
+export class UpdateUserStatusReqDto {
+  @IsEnum(UserStatus)
+  @ApiProperty({ description: '사용자 상태', example: 'APPROVED' })
+  status: UserStatus;
 }

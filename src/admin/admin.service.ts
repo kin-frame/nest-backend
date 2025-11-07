@@ -10,6 +10,7 @@ import { User } from 'src/user/user.entity';
 import {
   UpdateAdminUserInfoReqDto,
   UpdateUserRoleReqDto,
+  UpdateUserStatusReqDto,
 } from './dto/user.dto';
 
 @Injectable()
@@ -109,6 +110,23 @@ export class AdminService {
     const payload: Partial<User> = {};
 
     if (dto.role !== undefined) payload.role = dto.role;
+
+    if (Object.keys(payload).length === 0) {
+      throw new BadRequestException('수정할 값이 없습니다.');
+    }
+
+    const result = await this.userRepo.update({ id }, payload);
+    if (!result.affected) {
+      throw new NotFoundException('사용자를 찾을 수 없습니다.');
+    }
+
+    return this.userRepo.findOne({ where: { id } });
+  }
+
+  async updateUserStatus(id: number, dto: UpdateUserStatusReqDto) {
+    const payload: Partial<User> = {};
+
+    if (dto.status !== undefined) payload.status = dto.status;
 
     if (Object.keys(payload).length === 0) {
       throw new BadRequestException('수정할 값이 없습니다.');
