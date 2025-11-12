@@ -6,6 +6,7 @@ import {
   Index,
   ManyToOne,
   PrimaryGeneratedColumn,
+  RelationId,
   UpdateDateColumn,
 } from 'typeorm';
 
@@ -91,4 +92,8 @@ export class File {
 
   @ManyToOne(() => Directory, { nullable: true, onDelete: 'SET NULL' })
   directory: Directory;
+
+  @ApiPropertyOptional({ example: 123, nullable: true })
+  @RelationId((file: File) => file.directory)
+  directoryId: number;
 }
