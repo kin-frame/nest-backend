@@ -5,11 +5,14 @@ import {
   Query,
   Req,
   Res,
+  ServiceUnavailableException,
   UseGuards,
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { type Request, type Response } from 'express';
+import jwt from 'jsonwebtoken';
 
+import { UserRole } from 'src/user/user.entity';
 import { UserService } from 'src/user/user.service';
 import { AuthService } from './auth.service';
 
@@ -66,20 +69,26 @@ export class AuthController {
       await this.userService.updateLastLoginedIp(user.id, req.ip);
       await this.userService.deleteSessionId(user.id);
 
-      if (user.status === 'PENDING') {
-        // PENDING이면 회원가입 페이지로 리다이렉트
+      /** 
+      // PENDING이면 회원가입 페이지로 리다이렉트
+      if (user.status === UserStatus.PENDING) {
         return res.redirect(`${process.env.CLIENT_URL}/signup`);
       }
 
-      if (user.status === 'SUBMIT') {
-        // 회원가입 신청을 완료했다면, 회원가입 완료 안내 페이지로 리다이렉트
+      // 회원가입 신청을 완료했다면, 회원가입 완료 안내 페이지로 리다이렉트
+      if (user.status === UserStatus.SUBMIT) {
         return res.redirect(`${process.env.CLIENT_URL}/signup/info`);
       }
 
       // APPROVED라면 홈으로 리다이렉트
       return res.redirect(`${process.env.CLIENT_URL}/home`);
+      */
+      return res.json({ status: user.status }).send();
     } catch {
-      return res.redirect(`${process.env.CLIENT_URL}/login`);
+      // return res.redirect(`${process.env.CLIENT_URL}/login`);
+      throw new ServiceUnavailableException({
+        status: null,
+      });
     }
   }
 
@@ -88,6 +97,37 @@ export class AuthController {
     res.clearCookie('access_token');
 
     return res.status(204).send();
+  }
+
+  @Get('check')
+  check(@Req() req: Request) {
+    const token = String(req.cookies['access_token']);
+
+    if (!token) {
+      return { isLogin: false, exp: 0, role: UserRole.GUEST };
+    }
+    try {
+      const { payload } = jwt.verify(
+        token,
+        process.env.JWT_SECRET || 'some_secret',
+        {
+          algorithms: ['HS256'], // RS256 쓰려면 공개키 필요
+          complete: true,
+        },
+      );
+
+      if (typeof payload === 'string') {
+        return { isLogin: false, exp: 0, role: UserRole.GUEST };
+      } else {
+        return {
+          isLogin: true,
+          exp: payload.exp,
+          role: payload.role as UserRole,
+        };
+      }
+    } catch {
+      return { isLogin: false, exp: 0, role: UserRole.GUEST };
+    }
   }
 }
 
