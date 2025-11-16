@@ -101,7 +101,7 @@ export class AuthController {
 
   @Get('check')
   check(@Req() req: Request) {
-    const token = String(req.cookies['access_token']);
+    const token = String(req.cookies['access_token'] || '');
 
     if (!token) {
       return { isLogin: false, exp: 0, role: UserRole.GUEST };
