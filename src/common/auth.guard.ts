@@ -12,8 +12,8 @@ export class AuthGuard implements CanActivate {
   canActivate(ctx: ExecutionContext): boolean {
     const req = ctx.switchToHttp().getRequest<Request>();
 
-    // 1. 쿠키에서 먼저 확인
-    const token = req.cookies['access_token'] as string;
+    // 1. 헤더에서 먼저 확인
+    const token = req.headers['authorization'];
 
     if (!token) {
       throw new UnauthorizedException('JWT 토큰이 없습니다.');
