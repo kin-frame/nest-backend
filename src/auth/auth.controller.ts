@@ -5,6 +5,7 @@ import {
   Req,
   Res,
   ServiceUnavailableException,
+  UnauthorizedException,
   UseGuards,
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
@@ -54,6 +55,12 @@ export class AuthController {
   @Get('token')
   async generateAccessToken(@Req() req: Request, @Res() res: Response) {
     const sessionId = req.cookies['refresh_token'] as string;
+
+    if (!sessionId) {
+      throw new UnauthorizedException({
+        status: null,
+      });
+    }
 
     try {
       const user = await this.userService.findBySessionId(sessionId);
