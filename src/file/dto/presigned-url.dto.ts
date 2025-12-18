@@ -60,3 +60,19 @@ export class GetPresignedUrlResDto {
   })
   id: number;
 }
+
+export class PresignedUrlReqDto {
+  @IsNotEmpty()
+  @ApiProperty({
+    description: '파일 아이디',
+  })
+  fileId: number;
+}
+
+export class PresignedUrlResDto {
+  @IsNotEmpty()
+  @ApiProperty({
+    description: 'S3 presigned url',
+  })
+  url: string;
+}

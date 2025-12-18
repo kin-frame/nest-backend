@@ -14,7 +14,7 @@ import {
   ServiceUnavailableException,
   UseGuards,
 } from '@nestjs/common';
-import { ApiOkResponse, ApiOperation } from '@nestjs/swagger';
+import { ApiOkResponse, ApiOperation, ApiQuery } from '@nestjs/swagger';
 import {
   GetObjectCommand,
   HeadObjectCommand,
@@ -41,6 +41,8 @@ import {
 import {
   GetPresignedUrlReqDto,
   GetPresignedUrlResDto,
+  PresignedUrlReqDto,
+  PresignedUrlResDto,
 } from './dto/presigned-url.dto';
 import { File, FileStatus } from './file.entity';
 import { FileService } from './file.service';
@@ -59,6 +61,14 @@ export class FileController {
   @UseGuards(AuthGuard, StatusGuard)
   @ApiOperation({
     summary: 'S3 버킷에 접근할 수 있는 presigned url 요청',
+  })
+  @ApiQuery({
+    type: PresignedUrlReqDto,
+    description: 'presigned url 요청 쿼리',
+  })
+  @ApiOkResponse({
+    type: PresignedUrlResDto,
+    description: 'presigned url 정보',
   })
   async getPresignedUrl(@Query() query: { fileId: number }) {
     const meta = await this.fileService.getFileKey(query.fileId);
