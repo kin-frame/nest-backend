@@ -77,25 +77,51 @@ export class FileController {
       !meta?.expiresAt || new Date(meta.expiresAt).getTime() < Date.now();
 
     if (isExpired) {
-      const command = new GetObjectCommand({
-        Bucket: process.env.AWS_S3_BUCKET,
-        Key: meta?.key,
-      });
-      const url = await getSignedUrl(this.s3, command, {
-        expiresIn: 24 * 60 * 60,
-      });
-      await this.fileService.updatePresignedUrl(query.fileId, url);
+      const [url, thumbnailUrl] = await Promise.all([
+        getSignedUrl(
+          this.s3,
+          new GetObjectCommand({
+            Bucket: process.env.AWS_S3_BUCKET,
+            Key: meta?.key,
+          }),
+          {
+            expiresIn: 24 * 60 * 60,
+          },
+        ),
+        meta?.thumbnailKey &&
+          getSignedUrl(
+            this.s3,
+            new GetObjectCommand({
+              Bucket: process.env.AWS_S3_BUCKET,
+              Key: meta.thumbnailKey,
+            }),
+            {
+              expiresIn: 24 * 60 * 60,
+            },
+          ),
+      ]);
 
-      return { url };
+      await Promise.all([
+        this.fileService.updatePresignedUrl(query.fileId, url),
+        thumbnailUrl &&
+          this.fileService.updatePresignedThumbnailUrl(
+            query.fileId,
+            thumbnailUrl,
+          ),
+      ]);
+
+      return { url, thumbnailUrl };
     } else {
-      return { url: meta.fileUrl };
+      return { url: meta.fileUrl, thumbnailUrl: meta.thumbnailUrl };
     }
   }
 
   @Get('presigned-url/thumbnail')
   @UseGuards(AuthGuard, StatusGuard)
   @ApiOperation({
-    summary: 'S3 버킷에 접근할 수 있는 썸네일 presigned url 요청',
+    deprecated: true,
+    summary:
+      'S3 버킷에 접근할 수 있는 썸네일 presigned url 요청 (presigned url요청으로 통합)',
   })
   async getPresignedThumbnailUrl(@Query() query: { fileId: number }) {
     const meta = await this.fileService.getFileKey(query.fileId);
