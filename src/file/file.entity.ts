@@ -96,4 +96,29 @@ export class File {
   @ApiPropertyOptional({ example: 123, nullable: true })
   @RelationId((file: File) => file.directory)
   directoryId: number;
+
+  @ApiProperty({ example: '', description: 'AWS S3 URL' })
+  @Column({ type: 'text' })
+  fileUrl?: string;
+
+  @ApiProperty({ example: '', description: 'AWS S3 Thumbnail URL' })
+  @Column({ type: 'text' })
+  thumbnailUrl?: string;
+
+  @ApiProperty({
+    type: String,
+    format: 'date-time',
+    description: 'Presigned URL 만료기한',
+  })
+  @Column({
+    type: 'datetime',
+    nullable: true,
+    transformer: {
+      from: (value: Date | null) => {
+        return value?.getTime() ? value : null;
+      },
+      to: (value: Date | null) => value,
+    },
+  })
+  expiresAt?: Date | null;
 }

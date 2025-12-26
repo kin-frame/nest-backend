@@ -73,14 +73,23 @@ export class FileController {
   async getPresignedUrl(@Query() query: { fileId: number }) {
     const meta = await this.fileService.getFileKey(query.fileId);
 
-    const command = new GetObjectCommand({
-      Bucket: process.env.AWS_S3_BUCKET,
-      Key: meta?.key,
-    });
+    const isExpired =
+      !meta?.expiresAt || new Date(meta.expiresAt).getTime() < Date.now();
 
-    const url = await getSignedUrl(this.s3, command, { expiresIn: 60 * 60 });
+    if (isExpired) {
+      const command = new GetObjectCommand({
+        Bucket: process.env.AWS_S3_BUCKET,
+        Key: meta?.key,
+      });
+      const url = await getSignedUrl(this.s3, command, {
+        expiresIn: 24 * 60 * 60,
+      });
+      await this.fileService.updatePresignedUrl(query.fileId, url);
 
-    return { url };
+      return { url };
+    } else {
+      return { url: meta.fileUrl };
+    }
   }
 
   @Get('presigned-url/thumbnail')
@@ -91,14 +100,23 @@ export class FileController {
   async getPresignedThumbnailUrl(@Query() query: { fileId: number }) {
     const meta = await this.fileService.getFileKey(query.fileId);
 
-    const command = new GetObjectCommand({
-      Bucket: process.env.AWS_S3_BUCKET,
-      Key: meta?.thumbnailKey,
-    });
+    const isExpired =
+      !meta?.expiresAt || new Date(meta.expiresAt).getTime() < Date.now();
 
-    const url = await getSignedUrl(this.s3, command, { expiresIn: 60 * 60 });
+    if (isExpired) {
+      const command = new GetObjectCommand({
+        Bucket: process.env.AWS_S3_BUCKET,
+        Key: meta?.thumbnailKey,
+      });
+      const url = await getSignedUrl(this.s3, command, {
+        expiresIn: 24 * 60 * 60,
+      });
+      await this.fileService.updatePresignedThumbnailUrl(query.fileId, url);
 
-    return { url };
+      return { url };
+    } else {
+      return { url: meta.thumbnailUrl };
+    }
   }
 
   @Post('presigned-url')

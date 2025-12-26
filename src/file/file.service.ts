@@ -35,6 +35,24 @@ export class FileService {
     return this.fileRepo.update({ id }, { status });
   }
 
+  async updatePresignedUrl(id: number, fileUrl: string) {
+    const HOUR = 60 * 60 * 1000;
+
+    return this.fileRepo.update(
+      { id },
+      { expiresAt: new Date(Date.now() + 24 * HOUR), fileUrl },
+    );
+  }
+
+  async updatePresignedThumbnailUrl(id: number, thumbnailUrl: string) {
+    const HOUR = 60 * 60 * 1000;
+
+    return this.fileRepo.update(
+      { id },
+      { expiresAt: new Date(Date.now() + 24 * HOUR), thumbnailUrl },
+    );
+  }
+
   async updateThumbnail(id: number) {
     const existing = await this.fileRepo.findOne({
       where: { id },

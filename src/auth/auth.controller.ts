@@ -37,12 +37,13 @@ export class AuthController {
 
       const user = await this.userService.findOrCreate(req.user);
       const sessionId = await this.authService.issueSessionId(user.id);
+      const HOUR = 60 * 60 * 1000;
 
       res.cookie('refresh_token', sessionId, {
         httpOnly: true,
         secure: false,
         sameSite: 'strict',
-        expires: new Date(Date.now() + 24 * 60 * 60 * 1000), // 24h
+        expires: new Date(Date.now() + 24 * HOUR), // 24h
       });
 
       return res.redirect(`${process.env.CLIENT_URL}/auth/callback`);
