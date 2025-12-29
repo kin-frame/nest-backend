@@ -88,6 +88,14 @@ export class User {
   })
   @Column({ type: 'varchar', length: 255, nullable: true })
   sessionId: string | null;
+
+  @ApiPropertyOptional({
+    example: null,
+    nullable: true,
+    description: 'google auth code',
+  })
+  @Column({ type: 'varchar', length: 255, nullable: true })
+  code: string | null;
 }
 
 export enum UserRole {

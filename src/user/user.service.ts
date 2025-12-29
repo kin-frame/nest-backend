@@ -39,6 +39,18 @@ export class UserService {
     return user;
   }
 
+  async findByCode(code: string) {
+    const user = await this.userRepo.findOne({
+      where: { code },
+    });
+
+    if (!user) {
+      throw new NotFoundException('사용자를 찾을 수 없습니다.');
+    }
+
+    return user;
+  }
+
   async updateLastLoginedAt(id: number) {
     const user = await this.userRepo.update(
       {

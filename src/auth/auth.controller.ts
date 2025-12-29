@@ -1,4 +1,5 @@
 import {
+  Body,
   Controller,
   Get,
   Post,
@@ -65,11 +66,34 @@ export class AuthController {
       if (!redirectUri)
         return res.redirect(`${process.env.CLIENT_URL}/auth/callback`);
 
-      return res.redirect(redirectUri);
+      return res.redirect(`${redirectUri}?code=${sessionId}`);
     } catch (error) {
       console.error(error);
       return res.redirect(`${process.env.CLIENT_URL}/login?error=oauth_failed`);
     }
+  }
+
+  @Post('code')
+  async getOauthToken(@Body('code') code: string, @Res() res: Response) {
+    const user = await this.userService.findByCode(code);
+    const sessionId = await this.authService.issueSessionId(user.id);
+    const HOUR = 60 * 60 * 1000;
+
+    res.cookie('refresh_token', sessionId, {
+      httpOnly: true,
+      secure: false,
+      sameSite: 'strict',
+      expires: new Date(Date.now() + 24 * HOUR), // 24h
+    });
+
+    const { access_token } = this.authService.issueToken(user);
+
+    return res
+      .json({
+        status: user.status,
+        accessToken: access_token,
+      })
+      .send();
   }
 
   @Get('token')
