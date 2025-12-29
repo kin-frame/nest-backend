@@ -9,7 +9,13 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
-import { type Request, type Response } from 'express';
+import {
+  Handler,
+  type NextFunction,
+  type Request,
+  type Response,
+} from 'express';
+import passport from 'passport';
 import jwt from 'jsonwebtoken';
 
 import { UserRole } from 'src/user/user.entity';
@@ -24,8 +30,16 @@ export class AuthController {
   ) {}
 
   @Get('google')
-  @UseGuards(AuthGuard('google'))
-  googleLogin() {}
+  googleLogin(@Req() req: Request, @Res() res: Response, next: NextFunction) {
+    const state = req.query.state as string;
+
+    const authorize = passport.authenticate('google', {
+      scope: ['profile', 'email'],
+      state,
+    }) as Handler;
+
+    authorize(req, res, next);
+  }
 
   @Get('google/callback')
   @UseGuards(AuthGuard('google'))
@@ -34,6 +48,8 @@ export class AuthController {
       if (!req.user) {
         throw new Error('구글 인증에 실패했습니다.');
       }
+
+      const redirectUri = req.query.state as string;
 
       const user = await this.userService.findOrCreate(req.user);
       const sessionId = await this.authService.issueSessionId(user.id);
@@ -46,7 +62,10 @@ export class AuthController {
         expires: new Date(Date.now() + 24 * HOUR), // 24h
       });
 
-      return res.redirect(`${process.env.CLIENT_URL}/auth/callback`);
+      if (!redirectUri)
+        return res.redirect(`${process.env.CLIENT_URL}/auth/callback`);
+
+      return res.redirect(redirectUri);
     } catch (error) {
       console.error(error);
       return res.redirect(`${process.env.CLIENT_URL}/login?error=oauth_failed`);
