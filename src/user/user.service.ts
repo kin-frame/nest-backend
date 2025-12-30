@@ -84,6 +84,28 @@ export class UserService {
     );
   }
 
+  async updateUserCode(id: number, code: string) {
+    const user = await this.userRepo.update(
+      {
+        id,
+      },
+      { code },
+    );
+
+    return user;
+  }
+
+  async deleteUserCOde(id: number) {
+    return this.userRepo.update(
+      {
+        id,
+      },
+      {
+        code: null,
+      },
+    );
+  }
+
   async updateLastLoginedIp(id: number, ip?: string) {
     const user = await this.userRepo.update(
       {

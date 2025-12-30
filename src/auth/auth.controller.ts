@@ -63,10 +63,12 @@ export class AuthController {
         expires: new Date(Date.now() + 24 * HOUR), // 24h
       });
 
-      if (!redirectUri)
+      if (!redirectUri || redirectUri.startsWith('http'))
         return res.redirect(`${process.env.CLIENT_URL}/auth/callback`);
 
-      return res.redirect(`${redirectUri}?code=${sessionId}`);
+      const code = await this.authService.issueCode(user.id);
+
+      return res.redirect(`${redirectUri}?code=${code}`);
     } catch (error) {
       console.error(error);
       return res.redirect(`${process.env.CLIENT_URL}/login?error=oauth_failed`);
@@ -74,17 +76,16 @@ export class AuthController {
   }
 
   @Post('code')
-  async getOauthToken(@Body('code') code: string, @Res() res: Response) {
-    const user = await this.userService.findByCode(code);
+  async getOauthToken(@Body() body: { code: string }, @Res() res: Response) {
+    const user = await this.userService.findByCode(body.code);
     const sessionId = await this.authService.issueSessionId(user.id);
-    const HOUR = 60 * 60 * 1000;
+    await this.userService.deleteUserCOde(user.id);
 
-    res.cookie('refresh_token', sessionId, {
-      httpOnly: true,
-      secure: false,
-      sameSite: 'strict',
-      expires: new Date(Date.now() + 24 * HOUR), // 24h
-    });
+    if (!body.code || !user) {
+      throw new UnauthorizedException({
+        status: null,
+      });
+    }
 
     const { access_token } = this.authService.issueToken(user);
 
@@ -92,8 +93,39 @@ export class AuthController {
       .json({
         status: user.status,
         accessToken: access_token,
+        refreshToken: sessionId,
       })
       .send();
+  }
+
+  @Post('refresh')
+  async refreshAccessToken(@Req() req: Request, @Res() res: Response) {
+    const sessionId = req.headers.authorization;
+
+    if (!sessionId) {
+      throw new UnauthorizedException({
+        status: null,
+      });
+    }
+
+    try {
+      const user = await this.userService.findBySessionId(sessionId);
+
+      const { access_token } = this.authService.issueToken(user);
+
+      // 로그인 성공하고 날짜 및 IP 업데이트
+      await this.userService.updateLastLoginedAt(user.id);
+      await this.userService.updateLastLoginedIp(user.id, req.ip);
+
+      return res
+        .json({ status: user.status, accessToken: access_token })
+        .send();
+    } catch {
+      // return res.redirect(`${process.env.CLIENT_URL}/login`);
+      throw new ServiceUnavailableException({
+        status: null,
+      });
+    }
   }
 
   @Get('token')
@@ -115,20 +147,6 @@ export class AuthController {
       await this.userService.updateLastLoginedAt(user.id);
       await this.userService.updateLastLoginedIp(user.id, req.ip);
 
-      /** 
-      // PENDING이면 회원가입 페이지로 리다이렉트
-      if (user.status === UserStatus.PENDING) {
-        return res.redirect(`${process.env.CLIENT_URL}/signup`);
-      }
-
-      // 회원가입 신청을 완료했다면, 회원가입 완료 안내 페이지로 리다이렉트
-      if (user.status === UserStatus.SUBMIT) {
-        return res.redirect(`${process.env.CLIENT_URL}/signup/info`);
-      }
-
-      // APPROVED라면 홈으로 리다이렉트
-      return res.redirect(`${process.env.CLIENT_URL}/home`);
-      */
       return res
         .json({ status: user.status, accessToken: access_token })
         .send();

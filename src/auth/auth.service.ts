@@ -32,4 +32,12 @@ export class AuthService {
 
     return uuid;
   }
+
+  async issueCode(userId: number) {
+    const uuid = randomUUID();
+
+    await this.userService.updateUserCode(userId, uuid);
+
+    return uuid;
+  }
 }
