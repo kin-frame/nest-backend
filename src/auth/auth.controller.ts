@@ -9,7 +9,7 @@ import {
   UnauthorizedException,
   UseGuards,
 } from '@nestjs/common';
-import { AuthGuard } from '@nestjs/passport';
+import { AuthGuard as PassportAuthGuard } from '@nestjs/passport';
 import {
   Handler,
   type NextFunction,
@@ -19,6 +19,8 @@ import {
 import passport from 'passport';
 import jwt from 'jsonwebtoken';
 
+import { AuthGuard } from 'src/common/auth.guard';
+import { CustomJwtPayload } from 'src/types/express';
 import { UserRole } from 'src/user/user.entity';
 import { UserService } from 'src/user/user.service';
 import { AuthService } from './auth.service';
@@ -43,7 +45,7 @@ export class AuthController {
   }
 
   @Get('google/callback')
-  @UseGuards(AuthGuard('google'))
+  @UseGuards(PassportAuthGuard('google'))
   async googleCallback(@Req() req: Request, @Res() res: Response) {
     try {
       if (!req.user) {
@@ -159,13 +161,13 @@ export class AuthController {
   }
 
   @Post('logout')
+  @UseGuards(AuthGuard)
   async logout(@Req() req: Request, @Res() res: Response) {
-    const sessionId = req.cookies['refresh_token'] as string;
+    const jwtPayload = req.jwt.payload as CustomJwtPayload;
 
     try {
-      const user = await this.userService.findBySessionId(sessionId);
+      const user = await this.userService.findById(jwtPayload.id);
       await this.userService.deleteSessionId(user.id);
-      res.clearCookie('refresh_token');
       return res.status(204).send();
     } catch {
       // return res.redirect(`${process.env.CLIENT_URL}/login`);
