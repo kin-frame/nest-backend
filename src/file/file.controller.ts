@@ -16,10 +16,12 @@ import {
 } from '@nestjs/common';
 import { ApiOkResponse, ApiOperation, ApiQuery } from '@nestjs/swagger';
 import {
+  CreateMultipartUploadCommand,
   GetObjectCommand,
   HeadObjectCommand,
   PutObjectCommand,
   S3Client,
+  UploadPartCommand,
 } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { type Request, type Response } from 'express';
@@ -161,7 +163,7 @@ export class FileController {
     body: GetPresignedUrlReqDto,
   ) {
     const jwtPayload = req.jwt.payload as CustomJwtPayload;
-    const key = `uploads/${jwtPayload.id}/${Date.now()}-${body.fileName}`;
+    const key = `uploads/${jwtPayload.id}/${Date.now()}-${encodeURIComponent(body.fileName)}`;
 
     const directory = await this.directoryService.getInfo(
       body.directoryId,
@@ -196,6 +198,98 @@ export class FileController {
       const url = await getSignedUrl(this.s3, command, { expiresIn: 600 });
 
       return { url, id: meta.id };
+    } catch (error) {
+      throw new ConflictException(error);
+    }
+  }
+
+  @Post('presigned-url/mobile')
+  @UseGuards(AuthGuard, StatusGuard)
+  @ApiOperation({
+    summary: 'presigned url - 모바일 업로드 url 요청',
+    description:
+      '모바일 환경에서 multipart 방식으로 File을 업로드 하고 해당 파일의 메타를 전달. url에 PUT요청으로 파일 업로드. 완료 후 complete api 호출하여 등록 완료',
+  })
+  @ApiOkResponse({
+    type: GetPresignedUrlResDto,
+  })
+  async getPresignedMultipartUploadUrl(
+    @Req() req: Request,
+    @Body()
+    body: GetPresignedUrlReqDto,
+  ) {
+    const jwtPayload = req.jwt.payload as CustomJwtPayload;
+    const key = `uploads/${jwtPayload.id}/${Date.now()}-${encodeURIComponent(body.fileName)}`;
+
+    const directory = await this.directoryService.getInfo(
+      body.directoryId,
+      jwtPayload.id,
+    );
+
+    if (!directory) {
+      return new NotFoundException('디렉토리를 찾을 수 없습니다.');
+    }
+
+    try {
+      // DB에 PENDING 상태로 저장
+      const meta = await this.fileService.createMeta({
+        userId: jwtPayload.id,
+        key,
+        lastModified: new Date(body.lastModified),
+        fileName: body.fileName,
+        fileSize: body.fileSize,
+        fileType: body.fileType,
+        status: FileStatus.PENDING,
+        width: body.width,
+        height: body.height,
+        directory,
+      });
+
+      const createCommand = new CreateMultipartUploadCommand({
+        Bucket: process.env.AWS_S3_BUCKET,
+        Key: key,
+        ContentType: body.fileType,
+      });
+
+      const { UploadId } = await this.s3.send(createCommand);
+
+      if (!UploadId) {
+        throw new ServiceUnavailableException({
+          success: false,
+        });
+      }
+
+      const MAX_PARTS = 10000;
+      const MIN_PART_SIZE = 5 * 1024 * 1024;
+      const partSize = Math.max(
+        MIN_PART_SIZE,
+        Math.ceil(body.fileSize / MAX_PARTS),
+      );
+      const partCount = Math.ceil(body.fileSize / partSize);
+
+      const urls = await Promise.all(
+        Array.from({ length: partCount }, (_, index) => {
+          const partNumber = index + 1;
+          const uploadPartCommand = new UploadPartCommand({
+            Bucket: process.env.AWS_S3_BUCKET,
+            Key: key,
+            UploadId,
+            PartNumber: partNumber,
+          });
+
+          return getSignedUrl(this.s3, uploadPartCommand, {
+            expiresIn: 1800,
+          });
+        }),
+      );
+
+      return {
+        id: meta.id,
+        uploadId: UploadId,
+        key,
+        partSize,
+        urls,
+      };
     } catch (error) {
       throw new ConflictException(error);
     }

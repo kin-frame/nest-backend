@@ -5,12 +5,14 @@ import {
   Entity,
   Index,
   ManyToOne,
+  OneToOne,
   PrimaryGeneratedColumn,
   RelationId,
   UpdateDateColumn,
 } from 'typeorm';
 
 import { Directory } from 'src/directory/directory.entity';
+import { Upload } from 'src/upload/upload.entity';
 
 export enum FileStatus {
   PENDING = 'PENDING', // 업로드 대기 중
@@ -121,4 +123,7 @@ export class File {
     },
   })
   expiresAt?: Date | null;
+
+  @OneToOne(() => Upload, { nullable: true, onDelete: 'SET NULL' })
+  uploadId: Upload;
 }

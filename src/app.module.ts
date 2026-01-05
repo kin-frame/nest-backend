@@ -7,6 +7,7 @@ import { AuthModule } from './auth/auth.module';
 import { DirectoryModule } from './directory/directory.module';
 import { FileModule } from './file/file.module';
 import { HealthModule } from './health/health.module';
+import { UploadModule } from './upload/upload.module';
 import { UserModule } from './user/user.module';
 
 @Module({
@@ -30,6 +31,7 @@ import { UserModule } from './user/user.module';
     FileModule,
     DirectoryModule,
     AdminModule,
+    UploadModule,
   ],
 })
 export class AppModule {}
