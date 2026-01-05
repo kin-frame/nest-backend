@@ -79,7 +79,7 @@ export class AuthController {
   async getOauthToken(@Body() body: { code: string }, @Res() res: Response) {
     const user = await this.userService.findByCode(body.code);
     const sessionId = await this.authService.issueSessionId(user.id);
-    await this.userService.deleteUserCOde(user.id);
+    await this.userService.deleteUserCode(user.id);
 
     if (!body.code || !user) {
       throw new UnauthorizedException({

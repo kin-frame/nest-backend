@@ -95,7 +95,7 @@ export class UserService {
     return user;
   }
 
-  async deleteUserCOde(id: number) {
+  async deleteUserCode(id: number) {
     return this.userRepo.update(
       {
         id,

@@ -2,12 +2,12 @@ import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 
+import { AdminModule } from './admin/admin.module';
 import { AuthModule } from './auth/auth.module';
 import { DirectoryModule } from './directory/directory.module';
 import { FileModule } from './file/file.module';
 import { HealthModule } from './health/health.module';
 import { UserModule } from './user/user.module';
-import { AdminModule } from './admin/admin.module';
 
 @Module({
   imports: [
