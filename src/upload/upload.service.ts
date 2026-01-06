@@ -31,4 +31,15 @@ export class UploadService {
 
     return this.uploadRepo.save(data);
   }
+
+  async findMeta(id: number) {
+    return this.uploadRepo.findOne({
+      where: { id },
+      relations: { file: true },
+    });
+  }
+
+  async updatePartIndex(id: number, partIndex: number) {
+    return this.uploadRepo.update({ id }, { partIndex });
+  }
 }

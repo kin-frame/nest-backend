@@ -1,8 +1,9 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNotEmpty } from 'class-validator';
+import { IsNotEmpty, IsOptional } from 'class-validator';
 
 export class UploadInitReqDto {
   @IsNotEmpty()
+  @IsOptional()
   @ApiProperty({
     description: '파일 최종 수정일자',
   })
@@ -44,7 +45,19 @@ export class UploadInitReqDto {
 export class UploadInitResDto {
   @IsNotEmpty()
   @ApiProperty({
+    description: '업로드 요청 Id',
+  })
+  id: number;
+
+  @IsNotEmpty()
+  @ApiProperty({
     description: 'S3 Upload Id',
   })
   uploadId: string;
+
+  @IsNotEmpty()
+  @ApiProperty({
+    description: 'UUID 기반 파일명',
+  })
+  fileName: string;
 }

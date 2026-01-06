@@ -41,6 +41,10 @@ export class Upload {
   @RelationId((upload: Upload) => upload.file)
   fileId?: number;
 
+  @ApiProperty({ type: String, description: 'AWS Multipart 업로드 ID' })
+  @Column({ nullable: true })
+  uploadId: string;
+
   @ApiProperty({ type: Number, description: '현재 진행중인 업로드 단계' })
   @Column({ default: 0 })
   partIndex: number;
@@ -54,6 +58,6 @@ export class Upload {
     description: '업로드 청크 사이즈',
     default: 5 * 1024 * 1024,
   })
-  @Column({ nullable: true })
+  @Column({ nullable: true, default: 5 * 1024 * 1024 })
   partSize: number;
 }
