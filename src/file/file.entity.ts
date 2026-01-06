@@ -100,11 +100,11 @@ export class File {
   directoryId: number;
 
   @ApiProperty({ example: '', description: 'AWS S3 URL' })
-  @Column({ type: 'text' })
+  @Column({ nullable: true })
   fileUrl?: string;
 
   @ApiProperty({ example: '', description: 'AWS S3 Thumbnail URL' })
-  @Column({ type: 'text' })
+  @Column({ nullable: true })
   thumbnailUrl?: string;
 
   @ApiProperty({
@@ -124,6 +124,9 @@ export class File {
   })
   expiresAt?: Date | null;
 
-  @OneToOne(() => Upload, { nullable: true, onDelete: 'SET NULL' })
-  uploadId: Upload;
+  @OneToOne(() => Upload, (upload) => upload.file, {
+    nullable: true,
+    onDelete: 'SET NULL',
+  })
+  upload?: Upload;
 }

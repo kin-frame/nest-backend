@@ -14,8 +14,15 @@ export class UploadService {
   ) {}
 
   async createMeta(data: Partial<Upload>) {
+    const fileId = data.file?.id;
+
+    if (!fileId) {
+      throw new Error('file id required');
+    }
+
     const existing = await this.uploadRepo.findOne({
-      where: { userId: data.userId },
+      where: { file: { id: fileId } },
+      select: { id: true },
     });
 
     if (existing) {

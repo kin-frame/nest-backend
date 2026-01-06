@@ -3,8 +3,10 @@ import {
   Column,
   CreateDateColumn,
   Entity,
+  JoinColumn,
   OneToOne,
   PrimaryGeneratedColumn,
+  RelationId,
   UpdateDateColumn,
 } from 'typeorm';
 
@@ -29,15 +31,22 @@ export class Upload {
   @UpdateDateColumn()
   updatedAt: Date;
 
-  @OneToOne(() => File, { nullable: true, onDelete: 'SET NULL' })
+  @OneToOne(() => File, (file) => file.upload, {
+    nullable: true,
+    onDelete: 'SET NULL',
+  })
+  @JoinColumn({ name: 'fileId' }) // FK 컬럼 생성
   file: File;
 
+  @RelationId((upload: Upload) => upload.file)
+  fileId?: number;
+
   @ApiProperty({ type: Number, description: '현재 진행중인 업로드 단계' })
-  @Column()
+  @Column({ default: 0 })
   partIndex: number;
 
   @ApiProperty({ type: Number, description: '진행할 업로드 카운트' })
-  @Column()
+  @Column({ nullable: true })
   partCount: number;
 
   @ApiProperty({
@@ -45,6 +54,6 @@ export class Upload {
     description: '업로드 청크 사이즈',
     default: 5 * 1024 * 1024,
   })
-  @Column()
+  @Column({ nullable: true })
   partSize: number;
 }

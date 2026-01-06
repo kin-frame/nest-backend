@@ -53,6 +53,10 @@ export class FileService {
     );
   }
 
+  async deleteMeta(id: number) {
+    return this.fileRepo.delete({ id });
+  }
+
   async updateThumbnail(id: number) {
     const existing = await this.fileRepo.findOne({
       where: { id },

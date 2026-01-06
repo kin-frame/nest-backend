@@ -2,6 +2,7 @@ import { CanActivate, ExecutionContext, Injectable } from '@nestjs/common';
 import { type Request } from 'express';
 
 import { CustomJwtPayload } from 'src/types/express';
+import { UserStatus } from 'src/user/user.entity';
 import { UserService } from 'src/user/user.service';
 
 @Injectable()
@@ -15,7 +16,7 @@ export class StatusGuard implements CanActivate {
 
     const user = await this.userService.findById(userId);
 
-    if (!user || user.status !== 'APPROVED') {
+    if (!user || user.status !== UserStatus.APPROVED) {
       return false;
     }
 

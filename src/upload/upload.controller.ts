@@ -12,6 +12,7 @@ import {
 import { ApiBody, ApiOkResponse, ApiOperation } from '@nestjs/swagger';
 import { CreateMultipartUploadCommand, S3Client } from '@aws-sdk/client-s3';
 import { type Request } from 'express';
+import { randomUUID } from 'crypto';
 
 import { AuthGuard } from 'src/common/auth.guard';
 import { StatusGuard } from 'src/common/status.guard';
@@ -46,7 +47,10 @@ export class UploadController {
   })
   async initUpload(@Req() req: Request, @Body() body: UploadInitReqDto) {
     const jwtPayload = req.jwt.payload as CustomJwtPayload;
-    const key = `uploads/${jwtPayload.id}/${Date.now()}-${encodeURIComponent(body.fileName)}`;
+    const extension = body.fileType?.split('/')[1] || 'png';
+    // NOTE: 모바일 업로드에서는 원본파일명을 추출하기 어려움
+    const fileName = `${Date.now()}-${randomUUID()}.${extension}`;
+    const key = `uploads/${jwtPayload.id}/${fileName}`;
 
     const directory = await this.directoryService.getInfo(
       body.directoryId,
@@ -57,13 +61,16 @@ export class UploadController {
       return new NotFoundException('디렉토리를 찾을 수 없습니다.');
     }
 
+    let fileMeta: Awaited<ReturnType<FileService['createMeta']>> | null = null;
+
     try {
-      // DB에 PENDING 상태로 저장
-      const fileMeta = await this.fileService.createMeta({
+      // NOTE: DB에 PENDING 상태로 저장
+      fileMeta = await this.fileService.createMeta({
         userId: jwtPayload.id,
         key,
+        // NOTE: 모바일 exif date값 형식 확인 필요
         lastModified: new Date(body.lastModified),
-        fileName: body.fileName,
+        fileName,
         fileSize: body.fileSize,
         fileType: body.fileType,
         status: FileStatus.PENDING,
@@ -79,7 +86,6 @@ export class UploadController {
       });
 
       const { UploadId } = await this.s3.send(createCommand);
-
       const meta = await this.uploadService.createMeta({
         userId: jwtPayload.id,
         file: fileMeta,
@@ -96,6 +102,15 @@ export class UploadController {
         uploadId: UploadId,
       };
     } catch (error) {
+      if (fileMeta?.id) {
+        try {
+          await this.fileService.deleteMeta(fileMeta.id);
+        } catch (deleteError) {
+          console.error(deleteError);
+        }
+      }
+
+      console.error(error);
       throw new ConflictException(error);
     }
   }
